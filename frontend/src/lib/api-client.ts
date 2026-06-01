@@ -21,7 +21,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   
   // Attach token if exists
-  const token = localStorage.getItem('token');
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const headers = new Headers(options.headers || {});
   
   if (token) {
@@ -34,6 +34,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   const config: RequestInit = {
     ...options,
+    credentials: 'include',
     headers,
   };
 

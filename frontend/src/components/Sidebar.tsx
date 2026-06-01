@@ -15,21 +15,22 @@ import {
   CreditCard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ScoreRing } from "./ScoreRing";
-import { issues, overallScore, store, unreadNotifications } from "@/lib/mock-data";
+import { useAuth } from "@/contexts/AuthContext";
+import { buildStore, fetchIssueSummary, fetchLatestAudit } from "@/lib/store-data";
 
 type NavItem = {
   to: string;
   label: string;
   icon: typeof Home;
   exact?: boolean;
-  badge?: number;
 };
 
 const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: Home, exact: true },
   { to: "/audit", label: "Store Audit", icon: Radar },
-  { to: "/action-plan", label: "Action Plan", icon: Zap, badge: issues.length },
+  { to: "/action-plan", label: "Action Plan", icon: Zap },
   { to: "/advisor", label: "AI Advisor", icon: Sparkles },
   { to: "/competitors", label: "Competitors", icon: BarChart3 },
   { to: "/reports", label: "Reports", icon: FileText },
@@ -40,22 +41,37 @@ const NAV: NavItem[] = [
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const { data: issueSummaryData } = useQuery({
+    queryKey: ["issue-summary"],
+    queryFn: fetchIssueSummary,
+    enabled: !!user,
+  });
+  const { data: latestAuditData } = useQuery({
+    queryKey: ["latest-audit"],
+    queryFn: fetchLatestAudit,
+    enabled: !!user,
+  });
 
-  // Close on route change
+  const unreadNotifications = 0;
+  const openIssues = issueSummaryData?.open ?? 0;
+  const store = buildStore(user, latestAuditData?.audit ?? null);
+  const overallScore = latestAuditData?.audit?.overallScore ?? 0;
+
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  // Lock body scroll when drawer open
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.body.style.overflow = open ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [open]);
 
   return (
     <>
-      {/* Mobile top bar */}
       <div
         className="lg:hidden fixed top-0 inset-x-0 h-14 z-40 flex items-center justify-between px-4 border-b bg-[var(--surface)]"
         style={{ borderColor: "var(--border)" }}
@@ -94,7 +110,6 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Backdrop (mobile) */}
       {open && (
         <button
           aria-label="Close menu"
@@ -103,14 +118,12 @@ export function Sidebar() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 w-[260px] sm:w-60 flex flex-col bg-[var(--surface)] border-r z-50 transition-transform duration-300 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
         style={{ borderColor: "var(--border)" }}
       >
-        {/* Logo */}
         <div className="px-5 pt-6 pb-4 relative">
           <button
             onClick={() => setOpen(false)}
@@ -124,36 +137,39 @@ export function Sidebar() {
               <Cpu className="size-4.5 text-white" strokeWidth={2.5} />
             </div>
             <div>
-              <div className="display font-bold text-[18px] leading-none tracking-tight">
-                StoreCoach
-              </div>
+              <div className="display font-bold text-[18px] leading-none tracking-tight">StoreCoach</div>
               <div className="text-[10px] mono uppercase tracking-widest mt-1" style={{ color: "var(--text-muted)" }}>
-                AI · v2.4
+                AI · Live
               </div>
             </div>
           </div>
 
-          {/* Store */}
-          <div className="mt-5 p-3 rounded-xl border" style={{ borderColor: "var(--border)", background: "color-mix(in oklab, var(--emerald-brand) 4%, white)" }}>
+          <div
+            className="mt-5 p-3 rounded-xl border"
+            style={{
+              borderColor: "var(--border)",
+              background: "color-mix(in oklab, var(--emerald-brand) 4%, white)",
+            }}
+          >
             <div className="flex items-center gap-3">
               <ScoreRing score={overallScore} size={48} stroke={4} />
               <div className="min-w-0">
-                <div className="text-[13px] font-semibold truncate">{store.name}</div>
+                <div className="text-[13px] font-semibold truncate">{store.name || "No store connected"}</div>
                 <div className="text-[10.5px] mono truncate" style={{ color: "var(--text-muted)" }}>
-                  {store.url}
+                  {store.url || "Waiting for authentication"}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 px-3 overflow-y-auto">
           <div className="label-eyebrow px-2 mb-2">Workspace</div>
           <ul className="space-y-0.5">
             {NAV.map((item) => {
               const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
               const Icon = item.icon;
+
               return (
                 <li key={item.to}>
                   <Link
@@ -177,14 +193,14 @@ export function Sidebar() {
                     )}
                     <Icon className="size-4" strokeWidth={active ? 2.5 : 2} />
                     <span className="flex-1">{item.label}</span>
-                    {item.badge ? (
+                    {item.to === "/action-plan" && openIssues > 0 && (
                       <span
                         className="text-[10px] mono font-bold px-1.5 py-0.5 rounded-full text-white"
                         style={{ background: "var(--danger)" }}
                       >
-                        {item.badge}
+                        {openIssues}
                       </span>
-                    ) : null}
+                    )}
                   </Link>
                 </li>
               );
@@ -192,7 +208,6 @@ export function Sidebar() {
           </ul>
         </nav>
 
-        {/* Bottom */}
         <div className="p-4 border-t" style={{ borderColor: "var(--border)" }}>
           <Link
             to="/audit"
@@ -202,7 +217,7 @@ export function Sidebar() {
             Run New Scan
           </Link>
           <div className="text-[10.5px] mono text-center mt-3" style={{ color: "var(--text-muted)" }}>
-            Last scan · 2h ago
+            {latestAuditData?.audit?.completedAt ? `Last scan · ${store.lastScannedMinutes}m ago` : "No completed scan yet"}
           </div>
         </div>
       </aside>
