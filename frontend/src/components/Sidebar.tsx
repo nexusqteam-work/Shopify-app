@@ -1,0 +1,211 @@
+import { Link, useRouterState } from "@tanstack/react-router";
+import {
+  Home,
+  Radar,
+  Zap,
+  Sparkles,
+  BarChart3,
+  FileText,
+  Settings,
+  Cpu,
+  Play,
+  Menu,
+  X,
+  Bell,
+  CreditCard,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { ScoreRing } from "./ScoreRing";
+import { issues, overallScore, store, unreadNotifications } from "@/lib/mock-data";
+
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+  badge?: number;
+};
+
+const NAV: NavItem[] = [
+  { to: "/", label: "Dashboard", icon: Home, exact: true },
+  { to: "/audit", label: "Store Audit", icon: Radar },
+  { to: "/action-plan", label: "Action Plan", icon: Zap, badge: issues.length },
+  { to: "/advisor", label: "AI Advisor", icon: Sparkles },
+  { to: "/competitors", label: "Competitors", icon: BarChart3 },
+  { to: "/reports", label: "Reports", icon: FileText },
+  { to: "/pricing", label: "Pricing", icon: CreditCard },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
+
+export function Sidebar() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [open, setOpen] = useState(false);
+
+  // Close on route change
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll when drawer open
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div
+        className="lg:hidden fixed top-0 inset-x-0 h-14 z-40 flex items-center justify-between px-4 border-b bg-[var(--surface)]"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <Link to="/" className="flex items-center gap-2">
+          <div className="size-8 rounded-lg gradient-emerald flex items-center justify-center glow-emerald">
+            <Cpu className="size-4 text-white" strokeWidth={2.5} />
+          </div>
+          <span className="display font-bold text-[16px] tracking-tight">StoreCoach</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label={`Notifications (${unreadNotifications} unread)`}
+            className="relative size-10 rounded-lg flex items-center justify-center border hover:bg-[var(--muted)] transition"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <Bell className="size-5" />
+            {unreadNotifications > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] mono font-bold text-white flex items-center justify-center"
+                style={{ background: "var(--danger)" }}
+              >
+                {unreadNotifications}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setOpen(true)}
+            aria-label="Open menu"
+            className="size-10 rounded-lg flex items-center justify-center border hover:bg-[var(--muted)] transition"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <Menu className="size-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Backdrop (mobile) */}
+      {open && (
+        <button
+          aria-label="Close menu"
+          onClick={() => setOpen(false)}
+          className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 w-[260px] sm:w-60 flex flex-col bg-[var(--surface)] border-r z-50 transition-transform duration-300 lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0`}
+        style={{ borderColor: "var(--border)" }}
+      >
+        {/* Logo */}
+        <div className="px-5 pt-6 pb-4 relative">
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+            className="lg:hidden absolute top-4 right-4 size-8 rounded-md flex items-center justify-center hover:bg-[var(--muted)]"
+          >
+            <X className="size-4" />
+          </button>
+          <div className="flex items-center gap-2.5">
+            <div className="size-9 rounded-xl gradient-emerald flex items-center justify-center glow-emerald">
+              <Cpu className="size-4.5 text-white" strokeWidth={2.5} />
+            </div>
+            <div>
+              <div className="display font-bold text-[18px] leading-none tracking-tight">
+                StoreCoach
+              </div>
+              <div className="text-[10px] mono uppercase tracking-widest mt-1" style={{ color: "var(--text-muted)" }}>
+                AI · v2.4
+              </div>
+            </div>
+          </div>
+
+          {/* Store */}
+          <div className="mt-5 p-3 rounded-xl border" style={{ borderColor: "var(--border)", background: "color-mix(in oklab, var(--emerald-brand) 4%, white)" }}>
+            <div className="flex items-center gap-3">
+              <ScoreRing score={overallScore} size={48} stroke={4} />
+              <div className="min-w-0">
+                <div className="text-[13px] font-semibold truncate">{store.name}</div>
+                <div className="text-[10.5px] mono truncate" style={{ color: "var(--text-muted)" }}>
+                  {store.url}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 overflow-y-auto">
+          <div className="label-eyebrow px-2 mb-2">Workspace</div>
+          <ul className="space-y-0.5">
+            {NAV.map((item) => {
+              const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
+              const Icon = item.icon;
+              return (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13.5px] font-medium transition-all duration-200 ${
+                      active
+                        ? "text-foreground"
+                        : "text-[var(--text-secondary)] hover:text-foreground hover:bg-[var(--muted)] hover:translate-x-0.5"
+                    }`}
+                    style={
+                      active
+                        ? { background: "color-mix(in oklab, var(--emerald-brand) 10%, white)" }
+                        : undefined
+                    }
+                  >
+                    {active && (
+                      <span
+                        className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full"
+                        style={{ background: "var(--emerald-brand)" }}
+                      />
+                    )}
+                    <Icon className="size-4" strokeWidth={active ? 2.5 : 2} />
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge ? (
+                      <span
+                        className="text-[10px] mono font-bold px-1.5 py-0.5 rounded-full text-white"
+                        style={{ background: "var(--danger)" }}
+                      >
+                        {item.badge}
+                      </span>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Bottom */}
+        <div className="p-4 border-t" style={{ borderColor: "var(--border)" }}>
+          <Link
+            to="/audit"
+            className="flex items-center justify-center gap-2 w-full gradient-emerald text-white text-[13.5px] font-semibold py-2.5 rounded-xl glow-emerald hover:opacity-95 active:scale-[0.98] transition-all"
+          >
+            <Play className="size-4" fill="currentColor" />
+            Run New Scan
+          </Link>
+          <div className="text-[10.5px] mono text-center mt-3" style={{ color: "var(--text-muted)" }}>
+            Last scan · 2h ago
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}

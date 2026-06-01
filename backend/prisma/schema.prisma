@@ -1,0 +1,243 @@
+// ═══════════════════════════════════════════════════
+//  StoreCoach — Complete Database Schema
+// ═══════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Merchants (Shopify store owners) ────────────────
+model Merchant {
+  id              String    @id @default(uuid())
+  shopDomain      String    @unique  // e.g. "mystore.myshopify.com"
+  shopName        String
+  email           String
+  accessToken     String    // Shopify OAuth access token (encrypted)
+  plan            Plan      @default(FREE)
+  planExpiresAt   DateTime?
+  billingId       String?   // Shopify billing subscription ID
+  timezone        String    @default("Asia/Kolkata")
+  currency        String    @default("INR")
+  isActive        Boolean   @default(true)
+  installedAt     DateTime  @default(now())
+  lastSeenAt      DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  audits          Audit[]
+  issues          Issue[]
+  competitors     Competitor[]
+  chatMessages    ChatMessage[]
+  reports         Report[]
+  notifications   Notification[]
+  storeMetrics    StoreMetric[]
+
+  @@map("merchants")
+}
+
+// ── Audit — full store health scan ──────────────────
+model Audit {
+  id              String      @id @default(uuid())
+  merchantId      String
+  merchant        Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  status          AuditStatus @default(PENDING)
+  overallScore    Int?        // 0-100
+  totalRevenueLoss Float?     // estimated monthly loss in store currency
+
+  // Category scores
+  speedScore      Int?
+  seoScore        Int?
+  conversionScore Int?
+  productScore    Int?
+  checkoutScore   Int?
+  mobileScore     Int?
+
+  // Raw data snapshots
+  rawSpeedData    Json?
+  rawSeoData      Json?
+  rawAppData      Json?
+  rawProductData  Json?
+  rawCheckoutData Json?
+
+  // AI analysis
+  aiSummary       String?  @db.Text
+  aiInsights      Json?    // Array of insight objects
+
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  issues          Issue[]
+
+  @@map("audits")
+}
+
+// ── Issue — individual problem found in audit ───────
+model Issue {
+  id              String        @id @default(uuid())
+  merchantId      String
+  merchant        Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  auditId         String?
+  audit           Audit?        @relation(fields: [auditId], references: [id])
+
+  priority        IssuePriority
+  category        IssueCategory
+  title           String
+  description     String        @db.Text
+  impact          Float         // estimated monthly revenue loss
+  effortMinutes   Int           // estimated fix time in minutes
+  fixInstructions String        @db.Text
+  shopifyAdminUrl String?       // direct link to fix in Shopify Admin
+  isFixed         Boolean       @default(false)
+  fixedAt         DateTime?
+  fixedNote       String?       // merchant note on how they fixed it
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("issues")
+}
+
+// ── Competitor tracking ──────────────────────────────
+model Competitor {
+  id              String    @id @default(uuid())
+  merchantId      String
+  merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  storeName       String
+  storeUrl        String
+  niche           String?
+  threatLevel     String?   // HIGH, MEDIUM, LOW
+  lastCheckedAt   DateTime?
+  createdAt       DateTime  @default(now())
+
+  // Scraped data snapshots (updated daily)
+  snapshots       CompetitorSnapshot[]
+
+  @@unique([merchantId, storeUrl])
+  @@map("competitors")
+}
+
+model CompetitorSnapshot {
+  id              String      @id @default(uuid())
+  competitorId    String
+  competitor      Competitor  @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  speedScore      Float?
+  priceRangeMin   Float?
+  priceRangeMax   Float?
+  reviewScore     Float?
+  appCount        Int?
+  productCount    Int?
+  aiInsight       String?     @db.Text
+  capturedAt      DateTime    @default(now())
+
+  @@map("competitor_snapshots")
+}
+
+// ── Chat messages with AI ────────────────────────────
+model ChatMessage {
+  id              String    @id @default(uuid())
+  merchantId      String
+  merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  sessionId       String    // group messages into conversations
+  role            String    // "user" | "assistant"
+  content         String    @db.Text
+  tokensUsed      Int?
+  createdAt       DateTime  @default(now())
+
+  @@index([merchantId, sessionId])
+  @@map("chat_messages")
+}
+
+// ── Store metrics (time series) ──────────────────────
+model StoreMetric {
+  id              String    @id @default(uuid())
+  merchantId      String
+  merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  date            DateTime  @db.Date
+  revenue         Float     @default(0)
+  orders          Int       @default(0)
+  visitors        Int       @default(0)
+  conversionRate  Float     @default(0)
+  avgOrderValue   Float     @default(0)
+  newCustomers    Int       @default(0)
+  refundRate      Float     @default(0)
+  createdAt       DateTime  @default(now())
+
+  @@unique([merchantId, date])
+  @@map("store_metrics")
+}
+
+// ── Weekly / Monthly reports ─────────────────────────
+model Report {
+  id              String      @id @default(uuid())
+  merchantId      String
+  merchant        Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  type            ReportType
+  period          String      // e.g. "2026-W22" or "2026-05"
+  data            Json        // complete report data
+  aiSummary       String?     @db.Text
+  emailSentAt     DateTime?
+  createdAt       DateTime    @default(now())
+
+  @@unique([merchantId, type, period])
+  @@map("reports")
+}
+
+// ── Notifications ────────────────────────────────────
+model Notification {
+  id              String    @id @default(uuid())
+  merchantId      String
+  merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  type            String    // "new_issue", "issue_fixed", "weekly_report", "competitor_alert"
+  title           String
+  body            String    @db.Text
+  data            Json?
+  isRead          Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  @@map("notifications")
+}
+
+// ── Enums ────────────────────────────────────────────
+enum Plan {
+  FREE
+  GROWTH
+  PRO
+  AGENCY
+}
+
+enum AuditStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum IssuePriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum IssueCategory {
+  SPEED
+  SEO
+  CONVERSION
+  PRODUCT
+  CHECKOUT
+  MOBILE
+  APPS
+}
+
+enum ReportType {
+  WEEKLY
+  MONTHLY
+}

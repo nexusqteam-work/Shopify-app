@@ -1,0 +1,190 @@
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
+@source "../src";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-display: 'Manrope', sans-serif;
+  --font-sans: 'Manrope', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-emerald-brand: var(--emerald-brand);
+  --color-emerald-brand-soft: var(--emerald-brand-soft);
+  --color-electric: var(--electric);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-surface: var(--surface);
+
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+  --animate-radar: radar 2.4s ease-out infinite;
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  --animate-shimmer: shimmer 2s linear infinite;
+
+  @keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.5; }
+  }
+  @keyframes radar {
+    0% { transform: scale(0.3); opacity: 0.9; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+  @keyframes fade-up {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+}
+
+:root {
+  --radius: 0.875rem;
+  --background: oklch(0.978 0.005 260);   /* #F7F8FC */
+  --foreground: oklch(0.18 0.025 260);    /* #0D1320 */
+  --surface: oklch(1 0 0);                /* #FFFFFF */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.025 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.025 260);
+
+  --primary: oklch(0.72 0.16 165);        /* #00C896 emerald */
+  --primary-foreground: oklch(1 0 0);
+  --emerald-brand: oklch(0.72 0.16 165);
+  --emerald-brand-soft: oklch(0.95 0.06 165);
+
+  --secondary: oklch(0.97 0.01 260);
+  --secondary-foreground: oklch(0.18 0.025 260);
+  --muted: oklch(0.96 0.01 260);
+  --muted-foreground: oklch(0.55 0.04 260); /* #5A6A8A */
+  --accent: oklch(0.95 0.06 165);
+  --accent-foreground: oklch(0.3 0.1 165);
+
+  --electric: oklch(0.66 0.19 256);       /* #3B82F6 */
+  --warn: oklch(0.78 0.16 75);            /* #F59E0B */
+  --danger: oklch(0.66 0.22 22);          /* #EF4444 */
+  --destructive: oklch(0.66 0.22 22);
+  --destructive-foreground: oklch(1 0 0);
+
+  --text-secondary: oklch(0.55 0.04 260);
+  --text-muted: oklch(0.72 0.03 260);     /* #9AA5BE */
+
+  --border: oklch(0.93 0.015 255);        /* #E8EDF5 */
+  --input: oklch(0.93 0.015 255);
+  --ring: oklch(0.72 0.16 165);
+
+  --chart-1: oklch(0.72 0.16 165);
+  --chart-2: oklch(0.66 0.19 256);
+  --chart-3: oklch(0.78 0.16 75);
+  --chart-4: oklch(0.66 0.22 22);
+  --chart-5: oklch(0.55 0.04 260);
+}
+
+.dark {
+  --background: oklch(0.18 0.025 260);
+  --foreground: oklch(0.97 0.005 260);
+  --card: oklch(0.22 0.03 260);
+  --card-foreground: oklch(0.97 0.005 260);
+  --popover: oklch(0.22 0.03 260);
+  --popover-foreground: oklch(0.97 0.005 260);
+  --primary: oklch(0.72 0.16 165);
+  --primary-foreground: oklch(0.18 0.025 260);
+  --secondary: oklch(0.28 0.03 260);
+  --secondary-foreground: oklch(0.97 0.005 260);
+  --muted: oklch(0.28 0.03 260);
+  --muted-foreground: oklch(0.72 0.03 260);
+  --accent: oklch(0.28 0.03 260);
+  --accent-foreground: oklch(0.97 0.005 260);
+  --destructive: oklch(0.66 0.22 22);
+  --destructive-foreground: oklch(0.97 0.005 260);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.16 165);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body { font-family: var(--font-sans); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "ss01", "cv11";
+  }
+  h1, h2, h3, h4, h5 { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  :focus-visible { outline: 2px solid var(--emerald-brand); outline-offset: 2px; border-radius: 6px; }
+}
+
+@layer components {
+  .glass-card {
+    background: color-mix(in oklab, white 75%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+  }
+  .surface-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(13, 19, 32, 0.04), 0 4px 16px -8px rgba(13, 19, 32, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .surface-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 19, 32, 0.06), 0 12px 32px -12px rgba(13, 19, 32, 0.12);
+  }
+  .gradient-emerald {
+    background: linear-gradient(135deg, oklch(0.76 0.16 165) 0%, oklch(0.66 0.17 175) 100%);
+  }
+  .gradient-mesh {
+    background:
+      radial-gradient(ellipse at top left, color-mix(in oklab, var(--emerald-brand) 12%, transparent), transparent 60%),
+      radial-gradient(ellipse at top right, color-mix(in oklab, var(--electric) 10%, transparent), transparent 60%);
+  }
+  .glow-emerald {
+    box-shadow: 0 8px 24px -8px color-mix(in oklab, var(--emerald-brand) 60%, transparent);
+  }
+  .mono { font-family: var(--font-mono); font-feature-settings: "tnum"; }
+  .display { font-family: var(--font-display); }
+  .label-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+  }
+}
