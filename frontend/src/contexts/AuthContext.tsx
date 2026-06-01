@@ -26,8 +26,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     setIsLoading(true);
-    const token = localStorage.getItem('token');
+    let token = localStorage.getItem('token');
     
+    // Auto-login for dev mode
+    if (!token && import.meta.env.DEV) {
+      try {
+        const res = await api.post<{ success: boolean; token: string }>('/auth/token', { shopDomain: 'demo-store.myshopify.com' });
+        if (res.success) {
+          token = res.token;
+          localStorage.setItem('token', token);
+        }
+      } catch (e) {
+        console.error('Failed auto-login:', e);
+      }
+    }
+
     if (!token) {
       setUser(null);
       setIsLoading(false);

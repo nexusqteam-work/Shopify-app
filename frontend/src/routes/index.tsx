@@ -321,19 +321,25 @@ function Dashboard() {
           </Link>
         </div>
 
-        <QuickWins />
+        <QuickWins issues={mappedIssues} />
       </div>
     </div>
   );
 }
 
-function QuickWins() {
-  const wins = [
-    { id: "w1", title: "Enable Shop Pay one-tap checkout", time: "5 min", recovery: 8000 },
-    { id: "w2", title: "Hide phone and company fields at checkout", time: "10 min", recovery: 11000 },
-    { id: "w3", title: "Add scarcity badge to top products", time: "45 min", recovery: 14000 },
-  ];
+function QuickWins({ issues }: { issues: import("@/lib/mock-data").Issue[] }) {
+  const wins = issues
+    .filter((issue) => issue.effortMinutes < 60)
+    .slice(0, 3)
+    .map((issue) => ({
+      id: issue.id,
+      title: issue.title,
+      time: issue.effortLabel,
+      recovery: issue.revenueImpact,
+    }));
   const [done, setDone] = useState<Record<string, boolean>>({});
+
+  if (wins.length === 0) return null;
 
   return (
     <div className="surface-card p-6 animate-fade-up" style={{ animationDelay: "440ms" }}>

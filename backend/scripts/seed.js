@@ -137,7 +137,7 @@ async function main() {
       refundRate:     parseFloat((2 + Math.random() * 2).toFixed(2)),
     });
   }
-  await db.storeMetric.createMany({ data: metricsData, skipDuplicates: true });
+  await db.storeMetric.createMany({ data: metricsData });
   console.log(`✅ Metrics: 30 days seeded`);
 
   // Create demo competitors
@@ -147,7 +147,6 @@ async function main() {
       { merchantId: merchant.id, storeName: 'UrbanNest Co.',   storeUrl: 'urbannest.myshopify.com', niche: 'lifestyle', threatLevel: 'MEDIUM' },
       { merchantId: merchant.id, storeName: 'PureVibe Shop',   storeUrl: 'purevibe.myshopify.com',  niche: 'lifestyle', threatLevel: 'LOW' },
     ],
-    skipDuplicates: true,
   });
   console.log(`✅ Competitors seeded`);
 
@@ -158,7 +157,7 @@ async function main() {
       type:       'audit_complete',
       title:      'First Audit Complete! 🎉',
       body:       'Found 5 issues costing ₹1,05,000/month. Check your Action Plan to start fixing.',
-      data:       { auditId: audit.id },
+      data:       JSON.stringify({ auditId: audit.id }),
     },
   });
   console.log(`✅ Notifications seeded`);
