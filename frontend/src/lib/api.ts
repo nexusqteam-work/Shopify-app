@@ -4,15 +4,15 @@ import { API_URL } from '../config/env';
 const api: any = axios.create({ baseURL: API_URL, 
   withCredentials: true });
 
-api.interceptors.request.use(config => {
+api.interceptors.request.use((config: any) => {
   const token = localStorage.getItem('sc_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 api.interceptors.response.use(
-  res => res.data,
-  err => {
+  (res: any) => res.data,
+  (err: any) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('sc_token');
       window.location.href = '/login';
