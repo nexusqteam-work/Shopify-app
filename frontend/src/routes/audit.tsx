@@ -4,15 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Radar, Check, ArrowRight, Store, Sparkles } from "lucide-react";
 import { ScoreRing } from "@/components/ScoreRing";
 import { formatINRFull } from "@/lib/mock-data";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  buildCategories,
-  buildStore,
-  fetchAuditStatus,
-  fetchLatestAudit,
-  fetchIssueSummary,
-  runAudit,
-} from "@/lib/store-data";
+import { auditApi, issuesApi, visualAuditApi } from "@/lib/api";
+import { useMerchant } from "@/hooks/useMerchant";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
+import { SkeletonCard } from "@/components/ui/Skeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Eye, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/audit")({
   head: () => ({
@@ -38,43 +35,52 @@ const SCAN_STEPS = [
 type State = "pre" | "scanning" | "done";
 
 function AuditPage() {
-  const { user } = useAuth();
+  const { merchant } = useMerchant();
+  const { visualAudit } = usePlanFeatures();
   const queryClient = useQueryClient();
   const [state, setState] = useState<State>("pre");
   const [auditId, setAuditId] = useState<string | null>(null);
-  const { data: latestAuditData } = useQuery({
+
+  const { data: latestAuditRes, isPending: loadingAudit, isError: errorAudit, refetch: refetchAudit } = useQuery({
     queryKey: ["latest-audit"],
-    queryFn: fetchLatestAudit,
-    enabled: !!user,
+    queryFn: () => auditApi.getLatest(),
+    enabled: !!merchant,
   });
-  const { data: issueSummaryData } = useQuery({
+  
+  const { data: latestVisualAuditRes } = useQuery({
+    queryKey: ["visual-audit-latest"],
+    queryFn: () => visualAuditApi.getLatest(),
+    enabled: !!merchant && visualAudit,
+    retry: false,
+  });
+  const { data: issueSummaryRes, isPending: loadingSummary, isError: errorSummary, refetch: refetchSummary } = useQuery({
     queryKey: ["issue-summary"],
-    queryFn: fetchIssueSummary,
-    enabled: !!user,
+    queryFn: () => issuesApi.summary(),
+    enabled: !!merchant,
   });
-  const { data: auditStatusData } = useQuery({
+  const { data: auditStatusRes } = useQuery({
     queryKey: ["audit-status", auditId],
-    queryFn: () => fetchAuditStatus(auditId!),
+    queryFn: () => auditApi.getStatus(auditId!),
     enabled: !!auditId && state === "scanning",
     refetchInterval: 2500,
   });
 
   const runAuditMutation = useMutation({
-    mutationFn: runAudit,
-    onSuccess: (data) => {
+    mutationFn: () => auditApi.run(),
+    onSuccess: (data: any) => {
       setAuditId(data.auditId);
       setState("scanning");
     },
   });
 
   useEffect(() => {
-    if (latestAuditData?.audit && state === "pre" && !auditId) {
+    if (latestAuditRes?.audit && state === "pre" && !auditId) {
       setState("done");
     }
-  }, [latestAuditData?.audit, state, auditId]);
+  }, [latestAuditRes?.audit, state, auditId]);
 
   useEffect(() => {
-    if (auditStatusData?.status === "COMPLETED") {
+    if (auditStatusRes?.status === "COMPLETED") {
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ["latest-audit"] }),
         queryClient.invalidateQueries({ queryKey: ["issues"] }),
@@ -83,18 +89,65 @@ function AuditPage() {
       setState("done");
       setAuditId(null);
     }
-  }, [auditStatusData?.status, queryClient]);
+  }, [auditStatusRes?.status, queryClient]);
 
-  const store = buildStore(user, latestAuditData?.audit ?? null);
-  const categories = buildCategories(latestAuditData?.audit ?? null);
-  const overallScore = latestAuditData?.audit?.overallScore ?? auditStatusData?.overallScore ?? 0;
-  const totalLoss = latestAuditData?.audit?.totalRevenueLoss ?? issueSummaryData?.totalLoss ?? 0;
-  const progress = auditStatusData?.status === "COMPLETED" ? 100 : state === "scanning" ? 65 : 0;
+  const audit = latestAuditRes?.audit;
+  const auditStatusData = auditStatusRes?.audit; // if returned
+
+  let lastScannedMinutes = null;
+  if (audit?.completedAt) {
+    lastScannedMinutes = Math.floor((Date.now() - new Date(audit.completedAt).getTime()) / 60000);
+  }
+
+  const store = {
+    name: merchant?.shopName,
+    url: merchant?.shopDomain,
+    lastScannedMinutes,
+  };
+
+  const categories = audit ? [
+    { key: "speed", name: "Store Speed", score: audit.speedScore || 0, emoji: "⚡" },
+    { key: "seo", name: "SEO & Discovery", score: audit.seoScore || 0, emoji: "🔍" },
+    { key: "conversion", name: "Conversion Rate", score: audit.conversionScore || 0, emoji: "📈" },
+    { key: "product", name: "Product Pages", score: audit.productScore || 0, emoji: "🛍️" },
+    { key: "checkout", name: "Checkout Flow", score: audit.checkoutScore || 0, emoji: "🛒" },
+    { key: "mobile", name: "Mobile Experience", score: audit.mobileScore || 0, emoji: "📱" },
+  ] : [];
+
+  const visualAuditData = latestVisualAuditRes?.audit;
+  if (visualAuditData?.status === 'COMPLETED') {
+    categories.push({
+      key: "visual", name: "Visual UX", score: visualAuditData.score || 0, emoji: "🎨"
+    });
+  }
+
+  const overallScore = audit?.overallScore ?? auditStatusData?.overallScore ?? 0;
+  const totalLoss = audit?.totalRevenueLoss ?? issueSummaryRes?.summary?.totalLoss ?? 0;
+  const progress = auditStatusRes?.status === "COMPLETED" ? 100 : state === "scanning" ? 65 : 0;
   const stepIndex = useMemo(() => {
     if (state !== "scanning") return 0;
     const ratio = Math.min(SCAN_STEPS.length - 1, Math.floor((progress / 100) * SCAN_STEPS.length));
     return ratio;
   }, [progress, state]);
+
+  if (loadingAudit || loadingSummary) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <SkeletonCard />
+      </div>
+    );
+  }
+
+  if (errorAudit || errorSummary) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <ErrorState message="Failed to load audit data." onRetry={() => {
+          refetchAudit();
+          refetchSummary();
+        }} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1440px] 2xl:max-w-[1720px] px-4 sm:px-6 lg:px-10 xl:px-14 py-6 lg:py-8 xl:py-10">
@@ -187,7 +240,7 @@ function AuditPage() {
                 <span className="label-eyebrow" style={{ color: "var(--emerald-brand)" }}>AI Summary</span>
               </div>
               <p className="text-[13.5px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                {latestAuditData?.audit?.aiSummary ?? "Your latest audit summary will appear here after the backend completes analysis."}
+                {audit?.aiSummary ?? "Your latest audit summary will appear here after the backend completes analysis."}
               </p>
             </div>
           </div>
@@ -207,6 +260,25 @@ function AuditPage() {
             ))}
           </div>
 
+          {(!visualAuditData || visualAuditData.status !== 'COMPLETED') && (
+            <div className="surface-card p-6 mt-6 animate-fade-up">
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="size-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0" style={{ background: "color-mix(in oklab, var(--border) 20%, transparent)" }}>
+                  {!visualAudit ? <Lock className="size-5 text-foreground" /> : <Eye className="size-5 text-foreground" />}
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <div className="text-[15px] font-semibold">Visual Analysis</div>
+                  <div className="text-[12.5px] mt-1" style={{ color: "var(--text-secondary)" }}>
+                    {!visualAudit ? "Upgrade to Advanced to unlock AI visual analysis." : "Run a visual scan to get AI fixes for your store's layout."}
+                  </div>
+                </div>
+                <Link to="/visual-audit" className="gradient-emerald text-white font-semibold px-5 py-2.5 rounded-xl glow-emerald flex items-center gap-2 hover:opacity-95 transition whitespace-nowrap">
+                  {!visualAudit ? "Upgrade Plan" : "Run Visual Scan"} <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            </div>
+          )}
+
           <div className="surface-card p-6 flex items-center justify-between" style={{ background: "linear-gradient(90deg, color-mix(in oklab, var(--emerald-brand) 8%, white), white)", borderLeft: "4px solid var(--emerald-brand)" }}>
             <div className="flex items-center gap-4">
               <div className="size-12 rounded-xl gradient-emerald flex items-center justify-center">
@@ -214,7 +286,7 @@ function AuditPage() {
               </div>
               <div>
                 <div className="text-[15px] font-semibold">
-                  Found {issueSummaryData?.open ?? 0} open issues · Estimated{" "}
+                  Found {issueSummaryRes?.summary?.open ?? 0} open issues · Estimated{" "}
                   <span className="mono" style={{ color: "var(--danger)" }}>
                     {formatINRFull(totalLoss)}/month
                   </span>{" "}

@@ -9,15 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VisualAuditRouteImport } from './routes/visual-audit'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as CompetitorsRouteImport } from './routes/competitors'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AdvisorRouteImport } from './routes/advisor'
 import { Route as ActionPlanRouteImport } from './routes/action-plan'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const VisualAuditRoute = VisualAuditRouteImport.update({
+  id: '/visual-audit',
+  path: '/visual-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -31,6 +39,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompetitorsRoute = CompetitorsRouteImport.update({
@@ -58,6 +71,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,9 +83,12 @@ export interface FileRoutesByFullPath {
   '/advisor': typeof AdvisorRoute
   '/audit': typeof AuditRoute
   '/competitors': typeof CompetitorsRoute
+  '/connect': typeof ConnectRoute
   '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/visual-audit': typeof VisualAuditRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,9 +96,12 @@ export interface FileRoutesByTo {
   '/advisor': typeof AdvisorRoute
   '/audit': typeof AuditRoute
   '/competitors': typeof CompetitorsRoute
+  '/connect': typeof ConnectRoute
   '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/visual-audit': typeof VisualAuditRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,9 +110,12 @@ export interface FileRoutesById {
   '/advisor': typeof AdvisorRoute
   '/audit': typeof AuditRoute
   '/competitors': typeof CompetitorsRoute
+  '/connect': typeof ConnectRoute
   '/pricing': typeof PricingRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/visual-audit': typeof VisualAuditRoute
+  '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,9 +125,12 @@ export interface FileRouteTypes {
     | '/advisor'
     | '/audit'
     | '/competitors'
+    | '/connect'
     | '/pricing'
     | '/reports'
     | '/settings'
+    | '/visual-audit'
+    | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,9 +138,12 @@ export interface FileRouteTypes {
     | '/advisor'
     | '/audit'
     | '/competitors'
+    | '/connect'
     | '/pricing'
     | '/reports'
     | '/settings'
+    | '/visual-audit'
+    | '/auth/callback'
   id:
     | '__root__'
     | '/'
@@ -118,9 +151,12 @@ export interface FileRouteTypes {
     | '/advisor'
     | '/audit'
     | '/competitors'
+    | '/connect'
     | '/pricing'
     | '/reports'
     | '/settings'
+    | '/visual-audit'
+    | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -129,13 +165,23 @@ export interface RootRouteChildren {
   AdvisorRoute: typeof AdvisorRoute
   AuditRoute: typeof AuditRoute
   CompetitorsRoute: typeof CompetitorsRoute
+  ConnectRoute: typeof ConnectRoute
   PricingRoute: typeof PricingRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
+  VisualAuditRoute: typeof VisualAuditRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/visual-audit': {
+      id: '/visual-audit'
+      path: '/visual-audit'
+      fullPath: '/visual-audit'
+      preLoaderRoute: typeof VisualAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -155,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/competitors': {
@@ -192,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -201,9 +261,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdvisorRoute: AdvisorRoute,
   AuditRoute: AuditRoute,
   CompetitorsRoute: CompetitorsRoute,
+  ConnectRoute: ConnectRoute,
   PricingRoute: PricingRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
+  VisualAuditRoute: VisualAuditRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

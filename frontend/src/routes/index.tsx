@@ -14,16 +14,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Sparkline } from "@/components/Sparkline";
 import { formatINR, formatINRFull } from "@/lib/mock-data";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  buildCategories,
-  buildSparklines,
-  fetchIssueSummary,
-  fetchIssues,
-  fetchLatestAudit,
-  fetchMetricsSummary,
-  mapIssues,
-} from "@/lib/store-data";
+import { authApi, auditApi, issuesApi, metricsApi } from "@/lib/api";
+import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -97,37 +90,90 @@ function MetricCard({
 
 function Dashboard() {
   const [bannerOpen, setBannerOpen] = useState(true);
-  const { user } = useAuth();
-  const { data: metricsData } = useQuery({
+  const { merchant } = useAuth(); // Assuming useMerchant was used or just useAuth
+
+  const { data: metricsData, isPending: loadingMetrics, isError: errorMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ["metrics-summary"],
-    queryFn: fetchMetricsSummary,
-    enabled: !!user,
-  });
-  const { data: issuesData } = useQuery({
-    queryKey: ["issues"],
-    queryFn: fetchIssues,
-    enabled: !!user,
-  });
-  const { data: issueSummaryData } = useQuery({
-    queryKey: ["issue-summary"],
-    queryFn: fetchIssueSummary,
-    enabled: !!user,
-  });
-  const { data: latestAuditData } = useQuery({
-    queryKey: ["latest-audit"],
-    queryFn: fetchLatestAudit,
-    enabled: !!user,
+    queryFn: () => metricsApi.getSummary(30),
+    enabled: !!merchant,
   });
 
-  const mappedIssues = useMemo(() => mapIssues(issuesData?.issues ?? []).filter((issue) => {
-    const source = issuesData?.issues.find((entry) => entry.id === issue.id);
-    return source && !source.isFixed;
-  }), [issuesData?.issues]);
-  const totalLoss = issueSummaryData?.totalLoss ?? 0;
-  const categories = buildCategories(latestAuditData?.audit ?? null);
-  const overallScore = latestAuditData?.audit?.overallScore ?? 0;
-  const unreadNotifications = 0;
-  const sparklines = buildSparklines(metricsData?.metrics ?? []);
+  const { data: issuesRes, isPending: loadingIssues, isError: errorIssues, refetch: refetchIssues } = useQuery({
+    queryKey: ["issues"],
+    queryFn: () => issuesApi.getAll({ status: 'open' }),
+    enabled: !!merchant,
+  });
+
+  const { data: issueSummaryRes, isPending: loadingSummary, isError: errorSummary, refetch: refetchSummary } = useQuery({
+    queryKey: ["issue-summary"],
+    queryFn: () => issuesApi.summary(),
+    enabled: !!merchant,
+  });
+
+  const { data: latestAuditRes, isPending: loadingAudit, isError: errorAudit, refetch: refetchAudit } = useQuery({
+    queryKey: ["latest-audit"],
+    queryFn: () => auditApi.getLatest(),
+    enabled: !!merchant,
+  });
+
+  const isLoading = loadingMetrics || loadingIssues || loadingSummary || loadingAudit;
+  const isError = errorMetrics || errorIssues || errorSummary || errorAudit;
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <div className="mb-8"><SkeletonCard /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <SkeletonCard />
+          <div className="lg:col-span-2"><SkeletonCard /></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <ErrorState message="Failed to load dashboard data." onRetry={() => {
+          refetchMetrics();
+          refetchIssues();
+          refetchSummary();
+          refetchAudit();
+        }} />
+      </div>
+    );
+  }
+
+  const issues = issuesRes?.issues || [];
+  const issueSummary = issueSummaryRes?.summary || { totalLoss: 0 };
+  const totalLoss = issueSummary.totalLoss;
+  const audit = latestAuditRes?.audit;
+
+  const categories = audit ? [
+    { key: "speed", name: "Store Speed", score: audit.speedScore || 0, emoji: "⚡" },
+    { key: "seo", name: "SEO & Discovery", score: audit.seoScore || 0, emoji: "🔍" },
+    { key: "conversion", name: "Conversion Rate", score: audit.conversionScore || 0, emoji: "📈" },
+    { key: "product", name: "Product Pages", score: audit.productScore || 0, emoji: "🛍️" },
+    { key: "checkout", name: "Checkout Flow", score: audit.checkoutScore || 0, emoji: "🛒" },
+    { key: "mobile", name: "Mobile Experience", score: audit.mobileScore || 0, emoji: "📱" },
+  ] : [];
+
+  const overallScore = audit?.overallScore || 0;
+  const unreadNotifications = 0; // Will be handled by sidebar globally or context
+  
+  const metrics = metricsData?.metrics || [];
+  const sparklines = {
+    revenue: metrics.map((m: any) => m.revenue),
+    orders: metrics.map((m: any) => m.orders),
+    visitors: metrics.map((m: any) => m.visitors),
+    conversion: metrics.map((m: any) => m.conversionRate),
+  };
 
   const displayMetrics = metricsData?.summary
     ? {
@@ -148,11 +194,11 @@ function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6 animate-fade-up">
         <div>
           <h1 className="display text-[22px] sm:text-[28px] font-bold tracking-tight">
-            {user?.shopName ? `Welcome back, ${user.shopName}` : "Connect your store to begin"}
+            {merchant?.shopName ? `Welcome back, ${merchant.shopName}` : "Store Dashboard"}
           </h1>
           <p className="mt-1.5 text-[13px] sm:text-[14px]" style={{ color: totalLoss > 0 ? "var(--danger)" : "var(--emerald-brand)" }}>
-            {mappedIssues.length > 0
-              ? `Your store has ${mappedIssues.length} open issues costing ${formatINRFull(totalLoss)}/month`
+            {issues.length > 0
+              ? `Your store has ${issues.length} open issues costing ${formatINRFull(totalLoss)}/month`
               : "No open issues detected yet. Run an audit to generate live recommendations."}
           </p>
         </div>
@@ -177,7 +223,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {bannerOpen && mappedIssues.length > 0 && (
+      {bannerOpen && issues.length > 0 && (
         <div
           className="relative mb-6 p-4 pr-10 sm:pr-12 rounded-2xl flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 animate-fade-up"
           style={{
@@ -194,7 +240,7 @@ function Dashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[13px] sm:text-[13.5px] font-semibold">
-                Revenue leak detected - you are losing <span className="mono whitespace-nowrap" style={{ color: "var(--danger)" }}>{formatINRFull(totalLoss)}</span> every month from {mappedIssues.length} fixable issues
+                Revenue leak detected - you are losing <span className="mono whitespace-nowrap" style={{ color: "var(--danger)" }}>{formatINRFull(totalLoss)}</span> every month from {issues.length} fixable issues
               </div>
             </div>
           </div>
@@ -289,11 +335,11 @@ function Dashboard() {
               <div className="text-[15px] font-semibold">Action Required</div>
             </div>
             <span className="text-[11px] mono font-bold px-2 py-1 rounded-full" style={{ background: "color-mix(in oklab, var(--danger) 12%, white)", color: "var(--danger)" }}>
-              {mappedIssues.length} OPEN
+              {issues.length} OPEN
             </span>
           </div>
           <div className="space-y-2.5">
-            {mappedIssues.slice(0, 3).map((issue) => (
+            {issues.slice(0, 3).map((issue: any) => (
               <div key={issue.id} className="flex items-center gap-3 p-3 rounded-xl border hover:border-[var(--emerald-brand)] transition-colors" style={{ borderColor: "var(--border)" }}>
                 <span className="size-2.5 rounded-full shrink-0" style={{ background: issue.priority === "critical" ? "var(--danger)" : "var(--warn)" }} />
                 <div className="flex-1 min-w-0">
@@ -310,7 +356,7 @@ function Dashboard() {
                 </div>
               </div>
             ))}
-            {mappedIssues.length === 0 && (
+            {issues.length === 0 && (
               <div className="rounded-xl p-4 border text-[13px]" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
                 No open issues found.
               </div>
@@ -321,13 +367,13 @@ function Dashboard() {
           </Link>
         </div>
 
-        <QuickWins issues={mappedIssues} />
+        <QuickWins issues={issues} />
       </div>
     </div>
   );
 }
 
-function QuickWins({ issues }: { issues: import("@/lib/mock-data").Issue[] }) {
+function QuickWins({ issues }: { issues: any[] }) {
   const wins = issues
     .filter((issue) => issue.effortMinutes < 60)
     .slice(0, 3)

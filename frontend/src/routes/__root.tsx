@@ -101,21 +101,41 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-import { AuthProvider } from "../contexts/AuthContext";
+import { AuthProvider, useAuth } from "../contexts/AuthContext";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen" style={{ background: "var(--background)" }}>
-          <Sidebar />
-          <main className="lg:ml-60 min-h-screen pt-14 lg:pt-0">
-            <Outlet />
-          </main>
-          <FloatingAdvisor />
-        </div>
+        <AppLayout />
       </AuthProvider>
     </QueryClientProvider>
+  );
+}
+
+function AppLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { location } = useRouter().state;
+  const isPublicRoute = ['/connect', '/auth/callback', '/pricing'].includes(location.pathname);
+
+  if (isLoading) {
+    return <div className="min-h-screen" style={{ background: "var(--background)" }} />;
+  }
+
+  if (!isAuthenticated && !isPublicRoute) {
+    // Render nothing while redirect happens, or we can just redirect
+    window.location.href = '/connect';
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen" style={{ background: "var(--background)" }}>
+      {isAuthenticated && !isPublicRoute && <Sidebar />}
+      <main className={isAuthenticated && !isPublicRoute ? "lg:ml-60 min-h-screen pt-14 lg:pt-0" : "min-h-screen"}>
+        <Outlet />
+      </main>
+      {isAuthenticated && !isPublicRoute && <FloatingAdvisor />}
+    </div>
   );
 }

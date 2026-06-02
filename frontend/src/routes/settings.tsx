@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bell, Lock, CreditCard, Store as StoreIcon, Sparkles } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Bell, Lock, CreditCard, Store as StoreIcon, Sparkles, Eye } from "lucide-react";
+import { useMerchant } from "@/hooks/useMerchant";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { visualAuditApi, billingApi } from "@/lib/api";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -59,7 +62,22 @@ function Toggle({ label, defaultChecked = false }: { label: string; defaultCheck
 }
 
 function SettingsPage() {
-  const { user } = useAuth();
+  const { merchant } = useMerchant();
+  const { visualAudit, codeGen, autoFix } = usePlanFeatures();
+
+  const { data: planInfoRes } = useQuery({
+    queryKey: ["visual-audit-plan-info"],
+    queryFn: () => visualAuditApi.getPlanInfo(),
+  });
+
+  const upgradeMutation = useMutation({
+    mutationFn: (plan: string) => billingApi.activate(plan),
+    onSuccess: (res: any) => {
+      if (res?.confirmationUrl) {
+        window.location.href = res.confirmationUrl;
+      }
+    }
+  });
 
   return (
     <div className="mx-auto w-full max-w-[1100px] 2xl:max-w-[1280px] px-4 sm:px-6 lg:px-10 xl:px-14 py-6 lg:py-8 xl:py-10">
@@ -83,16 +101,16 @@ function SettingsPage() {
             style={{ borderColor: "var(--border)", background: "color-mix(in oklab, var(--emerald-brand) 4%, white)" }}
           >
             <div className="size-11 rounded-xl gradient-emerald flex items-center justify-center text-white font-bold display">
-              {user?.shopName?.[0] ?? "S"}
+              {merchant?.shopName?.[0] ?? "S"}
             </div>
             <div className="flex-1">
-              <div className="text-[14px] font-semibold">{user?.shopName ?? "No store connected"}</div>
+              <div className="text-[14px] font-semibold">{merchant?.shopName ?? "No store connected"}</div>
               <div className="mono text-[11.5px]" style={{ color: "var(--text-muted)" }}>
-                {user?.shopDomain ?? "Authenticate to load your store"}
+                {merchant?.shopDomain ?? "Authenticate to load your store"}
               </div>
-              {user && (
+              {merchant && (
                 <div className="text-[11.5px] mt-1" style={{ color: "var(--text-secondary)" }}>
-                  {user.email} · {user.plan} plan · {user.currency}
+                  {merchant.email} · {merchant.plan} plan · {merchant.currency}
                 </div>
               )}
             </div>
@@ -128,7 +146,7 @@ function SettingsPage() {
           <Section
             icon={CreditCard}
             title="Billing"
-            description={`${user?.plan ?? "StoreCoach"} plan${user?.currency ? ` · billed in ${user.currency}` : ""}.`}
+            description={`${merchant?.plan ?? "StoreCoach"} plan${merchant?.currency ? ` · billed in ${merchant.currency}` : ""}.`}
             delay={280}
           >
             <button className="w-full text-[13px] font-semibold py-2.5 rounded-xl gradient-emerald text-white glow-emerald hover:opacity-95">
@@ -136,6 +154,82 @@ function SettingsPage() {
             </button>
           </Section>
         </div>
+
+        <Section icon={Eye} title="Visual Analysis Features" description="Your current plan limits for visual audits and auto-fixes." delay={320}>
+          <div className="overflow-x-auto border rounded-xl mb-4" style={{ borderColor: "var(--border)" }}>
+            <table className="w-full text-left text-[12.5px]">
+              <thead style={{ background: "var(--muted)" }}>
+                <tr>
+                  <th className="px-4 py-2.5 font-semibold border-b" style={{ borderColor: "var(--border)" }}>Feature</th>
+                  <th className="px-4 py-2.5 font-semibold border-b text-center" style={{ borderColor: "var(--border)" }}>Basic</th>
+                  <th className="px-4 py-2.5 font-semibold border-b text-center" style={{ borderColor: "var(--border)" }}>Advanced</th>
+                  <th className="px-4 py-2.5 font-semibold border-b text-center" style={{ borderColor: "var(--border)" }}>Pro</th>
+                  <th className="px-4 py-2.5 font-semibold border-b text-center" style={{ borderColor: "var(--border)" }}>Agent</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: "var(--border)" }}>
+                <tr>
+                  <td className="px-4 py-2.5">Visual scan</td>
+                  <td className="px-4 py-2.5 text-center">❌</td>
+                  <td className="px-4 py-2.5 text-center">✅</td>
+                  <td className="px-4 py-2.5 text-center">✅</td>
+                  <td className="px-4 py-2.5 text-center">✅</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5">Pages per scan</td>
+                  <td className="px-4 py-2.5 text-center">0</td>
+                  <td className="px-4 py-2.5 text-center">2</td>
+                  <td className="px-4 py-2.5 text-center">6</td>
+                  <td className="px-4 py-2.5 text-center">All</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5">Conversion checks</td>
+                  <td className="px-4 py-2.5 text-center">0</td>
+                  <td className="px-4 py-2.5 text-center">10</td>
+                  <td className="px-4 py-2.5 text-center">30</td>
+                  <td className="px-4 py-2.5 text-center">50</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5">Code generation</td>
+                  <td className="px-4 py-2.5 text-center">❌</td>
+                  <td className="px-4 py-2.5 text-center">❌</td>
+                  <td className="px-4 py-2.5 text-center">✅</td>
+                  <td className="px-4 py-2.5 text-center">✅</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5">Auto-apply fix</td>
+                  <td className="px-4 py-2.5 text-center">❌</td>
+                  <td className="px-4 py-2.5 text-center">❌</td>
+                  <td className="px-4 py-2.5 text-center">❌</td>
+                  <td className="px-4 py-2.5 text-center">✅</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {!visualAudit ? (
+            <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)", background: "color-mix(in oklab, var(--muted) 40%, transparent)" }}>
+              <span className="text-[13px] font-semibold">Upgrade to Advanced to unlock Visual Analysis</span>
+              <button onClick={() => upgradeMutation.mutate('GROWTH')} disabled={upgradeMutation.isPending} className="gradient-emerald text-white text-[12px] font-bold px-4 py-2 rounded-lg transition hover:opacity-90 disabled:opacity-50">
+                {upgradeMutation.isPending ? "Upgrading..." : "Upgrade"}
+              </button>
+            </div>
+          ) : !codeGen ? (
+            <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)", background: "color-mix(in oklab, var(--muted) 40%, transparent)" }}>
+              <span className="text-[13px] font-semibold">Upgrade to Pro to unlock AI code generation</span>
+              <button onClick={() => upgradeMutation.mutate('PRO')} disabled={upgradeMutation.isPending} className="gradient-emerald text-white text-[12px] font-bold px-4 py-2 rounded-lg transition hover:opacity-90 disabled:opacity-50">
+                {upgradeMutation.isPending ? "Upgrading..." : "Upgrade"}
+              </button>
+            </div>
+          ) : !autoFix ? (
+            <div className="flex items-center justify-between p-4 rounded-xl border" style={{ borderColor: "var(--border)", background: "color-mix(in oklab, var(--muted) 40%, transparent)" }}>
+              <span className="text-[13px] font-semibold">Upgrade to Agent to unlock auto-apply</span>
+              <button onClick={() => upgradeMutation.mutate('AGENCY')} disabled={upgradeMutation.isPending} className="gradient-emerald text-white text-[12px] font-bold px-4 py-2 rounded-lg transition hover:opacity-90 disabled:opacity-50">
+                {upgradeMutation.isPending ? "Upgrading..." : "Upgrade"}
+              </button>
+            </div>
+          ) : null}
+        </Section>
       </div>
     </div>
   );

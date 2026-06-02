@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '../lib/api-client';
+import { authApi } from '../lib/api';
 
-interface Merchant {
+export interface Merchant {
   id: string;
   shopDomain: string;
   shopName: string;
@@ -11,76 +11,56 @@ interface Merchant {
 }
 
 interface AuthContextType {
-  user: Merchant | null;
+  merchant: Merchant | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string) => void;
   logout: () => void;
-  checkAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Merchant | null>(null);
+  const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkAuth = async () => {
-    setIsLoading(true);
-    let token = localStorage.getItem('token');
+  useEffect(() => {
+    const token = localStorage.getItem('sc_token');
     
-    // Auto-login for dev mode
-    if (!token && import.meta.env.DEV) {
-      try {
-        const res = await api.post<{ success: boolean; token: string }>('/auth/token', { shopDomain: 'demo-store.myshopify.com' });
-        if (res.success) {
-          token = res.token;
-          localStorage.setItem('token', token);
-        }
-      } catch (e) {
-        console.error('Failed auto-login:', e);
-      }
-    }
-
     if (!token) {
-      setUser(null);
+      setMerchant(null);
       setIsLoading(false);
       return;
     }
 
-    try {
-      const data = await api.get<{ success: boolean; merchant: Merchant }>('/auth/me');
-      if (data.success) {
-        setUser(data.merchant);
-      } else {
-        setUser(null);
-        localStorage.removeItem('token');
-      }
-    } catch (error) {
-      console.error('Failed to authenticate:', error);
-      setUser(null);
-      localStorage.removeItem('token');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    checkAuth();
+    authApi.getMe()
+      .then((data: any) => {
+        if (data.success && data.merchant) {
+          setMerchant(data.merchant);
+        } else {
+          setMerchant(null);
+          localStorage.removeItem('sc_token');
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to authenticate:', error);
+        setMerchant(null);
+        localStorage.removeItem('sc_token');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
-  const login = (token: string) => {
-    localStorage.setItem('token', token);
-    checkAuth();
+  const logout = () => {
+    localStorage.removeItem('sc_token');
+    setMerchant(null);
+    authApi.logout().catch(() => {});
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    api.post('/auth/logout', {}).catch(() => {});
-  };
+  const isAuthenticated = !!merchant;
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ merchant, isAuthenticated, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

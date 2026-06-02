@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Send, Paperclip } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { chatApi } from "@/lib/api";
+import { useMerchant } from "@/hooks/useMerchant";
+import { SkeletonList } from "@/components/ui/Skeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/advisor")({
   head: () => ({
@@ -28,28 +33,42 @@ function nowTs() {
   return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
 }
 
-function aiReply(q: string): string {
-  const lower = q.toLowerCase();
-  if (lower.includes("speed") || lower.includes("fast")) {
-    return "Your biggest speed bottleneck is 2.4MB of app-injected JavaScript. Removing ReviewBuddy Pro, LiveChat Plus, and ExitPop Master alone will drop mobile load time from 7.8s to ~3.2s. That's worth roughly ₹38,000/month in recovered revenue. Want me to walk through the migration plan?";
-  }
-  if (lower.includes("conversion") || lower.includes("aov")) {
-    return "Your conversion rate is 1.69% vs the industry benchmark of 2.5–3.1%. The top three levers, in order of ROI: (1) hide phone/company fields in checkout — 15 min for +₹19K/mo, (2) add scarcity badges on PDPs — 30 min for +₹24K/mo, (3) enable Shop Pay one-tap. Start with #1.";
-  }
-  if (lower.includes("first") || lower.includes("focus")) {
-    return "This week, focus on #1 — the 11-app JS bloat. It's a 2-hour effort but unlocks ₹38,000/month and cascades into better SEO and mobile UX scores. After that, the checkout simplification is a 15-minute task for ₹19,000/month.";
-  }
-  return "Based on your store data, the highest-leverage move right now is reducing app JavaScript. Your current 7.8s mobile load time is suppressing every other metric. Want me to break down a 2-week plan?";
-}
-
 function AdvisorPage() {
-  const [messages, setMessages] = useState<Msg[]>([{ role: "ai", text: WELCOME, ts: "" }]);
-  useEffect(() => {
-    setMessages((m) => (m[0]?.ts ? m : [{ ...m[0], ts: nowTs() }, ...m.slice(1)]));
-  }, []);
+  const { merchant } = useMerchant();
+  const queryClient = useQueryClient();
+  const sessionId = "default";
+  
+  const { data: historyRes, isPending, isError } = useQuery({
+    queryKey: ["chat-history", sessionId],
+    queryFn: () => chatApi.getHistory(sessionId),
+    enabled: !!merchant,
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: (msg: string) => chatApi.send(msg, sessionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chat-history", sessionId] });
+    },
+  });
+
   const [input, setInput] = useState("");
-  const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const messages = useMemo(() => {
+    const rawMessages = historyRes?.messages || [];
+    if (rawMessages.length === 0) {
+      return [{ role: "ai", text: WELCOME, ts: nowTs(), _id: "welcome" }];
+    }
+    return rawMessages.map((m: any) => ({
+      role: m.role,
+      text: m.content || m.text, // depending on backend naming
+      ts: new Date(m.createdAt || Date.now()).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+      _id: m.id || Math.random().toString(),
+    }));
+  }, [historyRes]);
+
+  // Optimistic typing or pending state
+  const typing = sendMutation.isPending;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -58,14 +77,25 @@ function AdvisorPage() {
   const send = (text: string) => {
     const t = text.trim();
     if (!t) return;
-    setMessages((m) => [...m, { role: "user", text: t, ts: nowTs() }]);
     setInput("");
-    setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setMessages((m) => [...m, { role: "ai", text: aiReply(t), ts: nowTs() }]);
-    }, 1200);
+    sendMutation.mutate(t);
   };
+
+  if (isPending) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen p-8 max-w-[820px] mx-auto w-full">
+        <SkeletonList count={3} />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-3.5rem)] lg:h-screen p-8 max-w-[820px] mx-auto w-full">
+        <ErrorState message="Failed to load chat history." onRetry={() => queryClient.invalidateQueries({ queryKey: ["chat-history", sessionId] })} />
+      </div>
+    );
+  }
 
   const showSuggestions = messages.length === 1;
 
@@ -74,8 +104,8 @@ function AdvisorPage() {
       {/* Chat */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-8">
         <div className="max-w-[820px] mx-auto space-y-5">
-          {messages.map((m, i) => (
-            <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""} animate-fade-up`}>
+          {messages.map((m: any, i: number) => (
+            <div key={m._id || i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""} animate-fade-up`}>
               {m.role === "ai" && (
                 <div className="size-8 rounded-full gradient-emerald flex items-center justify-center shrink-0 glow-emerald">
                   <span className="text-white text-[14px] font-bold">◈</span>
@@ -167,7 +197,7 @@ function AdvisorPage() {
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || sendMutation.isPending}
               className="size-10 rounded-full gradient-emerald flex items-center justify-center text-white glow-emerald hover:opacity-95 active:scale-[0.95] transition disabled:opacity-40"
             >
               <Send className="size-4" />

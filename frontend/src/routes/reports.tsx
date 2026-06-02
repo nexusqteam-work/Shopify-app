@@ -4,18 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Mail, Sparkles, TrendingUp, TrendingDown } from "lucide-react";
 import { ScoreRing } from "@/components/ScoreRing";
 import { formatINR, formatINRFull } from "@/lib/mock-data";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  buildWeeklyRevenue,
-  calculatePeriodChanges,
-  emailReport,
-  fetchDailyMetrics,
-  fetchIssueSummary,
-  fetchLatestAudit,
-  fetchReport,
-  fetchReports,
-  generateReport,
-} from "@/lib/store-data";
+import { reportsApi, metricsApi, issuesApi, auditApi } from "@/lib/api";
+import { useMerchant } from "@/hooks/useMerchant";
+import { SkeletonCard } from "@/components/ui/Skeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
@@ -59,61 +51,115 @@ function StatCard({
   );
 }
 
-function ReportsPage() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const { data: reportsData } = useQuery({
-    queryKey: ["reports"],
-    queryFn: fetchReports,
-    enabled: !!user,
+function calculatePeriodChanges(current: number, previous: number) {
+  if (!previous) return 100;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function buildWeeklyRevenue(metrics: any[]) {
+  const weekly: Record<string, number> = {};
+  metrics.forEach((m) => {
+    const d = new Date(m.date || Date.now());
+    // Get week number of the year approximately, or just month-week
+    const weekStr = `W${Math.ceil(d.getDate() / 7)} ${d.toLocaleString('en-US', { month: 'short' })}`;
+    weekly[weekStr] = (weekly[weekStr] || 0) + (m.revenue || 0);
   });
-  const latestReportId = reportsData?.reports?.[0]?.id;
-  const { data: latestReportData } = useQuery({
+  return Object.entries(weekly).map(([week, value]) => ({ week, value }));
+}
+
+function ReportsPage() {
+  const { merchant } = useMerchant();
+  const queryClient = useQueryClient();
+  
+  const { data: reportsRes, isPending: loadingReports, isError: errorReports, refetch: refetchReports } = useQuery({
+    queryKey: ["reports"],
+    queryFn: () => reportsApi.getAll(),
+    enabled: !!merchant,
+  });
+  const latestReportId = reportsRes?.reports?.[0]?.id;
+  const { data: latestReportRes } = useQuery({
     queryKey: ["report", latestReportId],
-    queryFn: () => fetchReport(latestReportId!),
+    queryFn: () => reportsApi.getById(latestReportId!),
     enabled: !!latestReportId,
   });
-  const { data: metricsData } = useQuery({
+  
+  const { data: metricsRes, isPending: loadingMetrics, isError: errorMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ["metrics-daily", 35],
-    queryFn: () => fetchDailyMetrics(35),
-    enabled: !!user,
+    queryFn: () => metricsApi.getDaily(35),
+    enabled: !!merchant,
   });
-  const { data: issueSummaryData } = useQuery({
+  
+  const { data: issueSummaryRes, isPending: loadingIssues, isError: errorIssues, refetch: refetchIssues } = useQuery({
     queryKey: ["issue-summary"],
-    queryFn: fetchIssueSummary,
-    enabled: !!user,
+    queryFn: () => issuesApi.summary(),
+    enabled: !!merchant,
   });
-  const { data: latestAuditData } = useQuery({
+  
+  const { data: latestAuditRes, isPending: loadingAudit, isError: errorAudit, refetch: refetchAudit } = useQuery({
     queryKey: ["latest-audit"],
-    queryFn: fetchLatestAudit,
-    enabled: !!user,
+    queryFn: () => auditApi.getLatest(),
+    enabled: !!merchant,
   });
 
   const generateMutation = useMutation({
-    mutationFn: generateReport,
+    mutationFn: () => reportsApi.generate(),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["reports"] });
     },
   });
 
   const emailMutation = useMutation({
-    mutationFn: emailReport,
+    mutationFn: async (id: string) => {
+      // Stub until backend supports it, or use if added
+      await new Promise(r => setTimeout(r, 1000));
+      return { success: true };
+    },
   });
 
-  const metrics = metricsData?.metrics ?? [];
+  const isPending = loadingReports || loadingMetrics || loadingIssues || loadingAudit;
+  const isError = errorReports || errorMetrics || errorIssues || errorAudit;
+
+  if (isPending) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <ErrorState message="Failed to load reports data." onRetry={() => {
+          refetchReports();
+          refetchMetrics();
+          refetchIssues();
+          refetchAudit();
+        }} />
+      </div>
+    );
+  }
+
+  const metrics = metricsRes?.metrics ?? [];
   const currentWeek = metrics.slice(-7);
   const previousWeek = metrics.slice(-14, -7);
-  const latestReport = latestReportData?.report;
+  const latestReport = latestReportRes?.report;
   const weeklyRevenue = buildWeeklyRevenue(metrics);
   const maxRev = Math.max(...weeklyRevenue.map((point) => point.value), 1);
 
-  const currentRevenue = currentWeek.reduce((sum, item) => sum + item.revenue, 0);
-  const previousRevenue = previousWeek.reduce((sum, item) => sum + item.revenue, 0);
-  const currentOrders = currentWeek.reduce((sum, item) => sum + item.orders, 0);
-  const previousOrders = previousWeek.reduce((sum, item) => sum + item.orders, 0);
-  const currentCustomers = currentWeek.reduce((sum, item) => sum + item.newCustomers, 0);
-  const previousCustomers = previousWeek.reduce((sum, item) => sum + item.newCustomers, 0);
-  const currentLoadTime = latestAuditData?.audit?.speedScore ? Math.max(1, Number((10 - latestAuditData.audit.speedScore / 10).toFixed(1))) : 0;
+  const currentRevenue = currentWeek.reduce((sum: number, item: any) => sum + (item.revenue || 0), 0);
+  const previousRevenue = previousWeek.reduce((sum: number, item: any) => sum + (item.revenue || 0), 0);
+  const currentOrders = currentWeek.reduce((sum: number, item: any) => sum + (item.orders || 0), 0);
+  const previousOrders = previousWeek.reduce((sum: number, item: any) => sum + (item.orders || 0), 0);
+  const currentCustomers = currentWeek.reduce((sum: number, item: any) => sum + (item.newCustomers || 0), 0);
+  const previousCustomers = previousWeek.reduce((sum: number, item: any) => sum + (item.newCustomers || 0), 0);
+  const currentLoadTime = latestAuditRes?.audit?.speedScore ? Math.max(1, Number((10 - latestAuditRes.audit.speedScore / 10).toFixed(1))) : 0;
+  const issueSummaryData = issueSummaryRes?.summary || { total: 0, fixed: 0, open: 0, critical: 0, totalLoss: 0 };
 
   const weeklyStats = useMemo(() => ({
     revenue: { value: currentRevenue, change: calculatePeriodChanges(currentRevenue, previousRevenue) },
@@ -236,7 +282,7 @@ function ReportsPage() {
           <div className="label-eyebrow">Recent Reports</div>
           <h3 className="display text-[17px] font-bold tracking-tight mb-4">Generated Summaries</h3>
           <div className="space-y-3">
-            {(reportsData?.reports ?? []).slice(0, 4).map((report) => (
+            {(reportsRes?.reports ?? []).slice(0, 4).map((report: any) => (
               <div key={report.id} className="rounded-xl border p-4" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -252,7 +298,7 @@ function ReportsPage() {
                 </p>
               </div>
             ))}
-            {(reportsData?.reports?.length ?? 0) === 0 && (
+            {(reportsRes?.reports?.length ?? 0) === 0 && (
               <div className="text-[13px]" style={{ color: "var(--text-secondary)" }}>
                 No reports generated yet. Use the button above to create your first backend report.
               </div>

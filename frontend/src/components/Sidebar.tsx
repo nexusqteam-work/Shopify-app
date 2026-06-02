@@ -13,12 +13,15 @@ import {
   X,
   Bell,
   CreditCard,
+  Eye,
+  Lock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ScoreRing } from "./ScoreRing";
-import { useAuth } from "@/contexts/AuthContext";
-import { buildStore, fetchIssueSummary, fetchLatestAudit } from "@/lib/store-data";
+import { useMerchant } from "@/hooks/useMerchant";
+import { issuesApi, auditApi, visualAuditApi } from "@/lib/api";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 type NavItem = {
   to: string;
@@ -30,6 +33,7 @@ type NavItem = {
 const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: Home, exact: true },
   { to: "/audit", label: "Store Audit", icon: Radar },
+  { to: "/visual-audit", label: "Visual Analysis", icon: Eye },
   { to: "/action-plan", label: "Action Plan", icon: Zap },
   { to: "/advisor", label: "AI Advisor", icon: Sparkles },
   { to: "/competitors", label: "Competitors", icon: BarChart3 },
@@ -41,22 +45,42 @@ const NAV: NavItem[] = [
 export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
-  const { data: issueSummaryData } = useQuery({
+  const { merchant } = useMerchant();
+  const { visualAudit } = usePlanFeatures();
+  
+  const { data: issueSummaryRes } = useQuery({
     queryKey: ["issue-summary"],
-    queryFn: fetchIssueSummary,
-    enabled: !!user,
+    queryFn: () => issuesApi.summary(),
+    enabled: !!merchant,
   });
-  const { data: latestAuditData } = useQuery({
+  const { data: latestAuditRes } = useQuery({
     queryKey: ["latest-audit"],
-    queryFn: fetchLatestAudit,
-    enabled: !!user,
+    queryFn: () => auditApi.getLatest(),
+    enabled: !!merchant,
+  });
+  const { data: visualIssuesRes } = useQuery({
+    queryKey: ["visual-audit-issues"],
+    queryFn: () => visualAuditApi.getIssues(),
+    enabled: !!merchant && visualAudit,
   });
 
   const unreadNotifications = 0;
-  const openIssues = issueSummaryData?.open ?? 0;
-  const store = buildStore(user, latestAuditData?.audit ?? null);
-  const overallScore = latestAuditData?.audit?.overallScore ?? 0;
+  const openIssues = issueSummaryRes?.summary?.open ?? 0;
+  const visualIssuesCount = visualIssuesRes?.count ?? visualIssuesRes?.issues?.length ?? 0;
+  
+  const audit = latestAuditRes?.audit;
+  let lastScannedMinutes = null;
+  if (audit?.completedAt) {
+    lastScannedMinutes = Math.floor((Date.now() - new Date(audit.completedAt).getTime()) / 60000);
+  }
+
+  const store = {
+    name: merchant?.shopName,
+    url: merchant?.shopDomain,
+    lastScannedMinutes,
+  };
+
+  const overallScore = audit?.overallScore ?? 0;
 
   useEffect(() => {
     setOpen(false);
@@ -201,6 +225,18 @@ export function Sidebar() {
                         {openIssues}
                       </span>
                     )}
+                    {item.to === "/visual-audit" && (
+                      !visualAudit ? (
+                        <Lock className="size-3.5 text-gray-400" />
+                      ) : visualIssuesCount > 0 ? (
+                        <span
+                          className="text-[10px] mono font-bold px-1.5 py-0.5 rounded-full text-white"
+                          style={{ background: "var(--warn)" }}
+                        >
+                          {visualIssuesCount}
+                        </span>
+                      ) : null
+                    )}
                   </Link>
                 </li>
               );
@@ -217,7 +253,7 @@ export function Sidebar() {
             Run New Scan
           </Link>
           <div className="text-[10.5px] mono text-center mt-3" style={{ color: "var(--text-muted)" }}>
-            {latestAuditData?.audit?.completedAt ? `Last scan · ${store.lastScannedMinutes}m ago` : "No completed scan yet"}
+            {audit?.completedAt ? `Last scan · ${store.lastScannedMinutes}m ago` : "No completed scan yet"}
           </div>
         </div>
       </aside>

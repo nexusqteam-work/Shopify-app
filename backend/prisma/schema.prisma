@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -18,7 +18,7 @@ model Merchant {
   shopName        String
   email           String
   accessToken     String    // Shopify OAuth access token (encrypted)
-  plan            String    @default("FREE")
+  plan            Plan      @default(FREE)
   planExpiresAt   DateTime?
   billingId       String?   // Shopify billing subscription ID
   timezone        String    @default("Asia/Kolkata")
@@ -36,6 +36,8 @@ model Merchant {
   chatMessages    ChatMessage[]
   reports         Report[]
   notifications   Notification[]
+  visualAudits    VisualAudit[]
+  codeFixes       CodeFix[]
   storeMetrics    StoreMetric[]
 
   @@map("merchants")
@@ -46,7 +48,7 @@ model Audit {
   id              String      @id @default(uuid())
   merchantId      String
   merchant        Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  status          String @default("PENDING")
+  status          AuditStatus @default(PENDING)
   overallScore    Int?        // 0-100
   totalRevenueLoss Float?     // estimated monthly loss in store currency
 
@@ -59,15 +61,15 @@ model Audit {
   mobileScore     Int?
 
   // Raw data snapshots
-  rawSpeedData    String?
-  rawSeoData      String?
-  rawAppData      String?
-  rawProductData  String?
-  rawCheckoutData String?
+  rawSpeedData    Json?
+  rawSeoData      Json?
+  rawAppData      Json?
+  rawProductData  Json?
+  rawCheckoutData Json?
 
   // AI analysis
-  aiSummary       String?  
-  aiInsights      String?    // Array of insight objects
+  aiSummary       String?  @db.Text
+  aiInsights      Json?    // Array of insight objects
 
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
@@ -87,17 +89,18 @@ model Issue {
   auditId         String?
   audit           Audit?        @relation(fields: [auditId], references: [id])
 
-  priority        String
-  category        String
+  priority        IssuePriority
+  category        IssueCategory
   title           String
-  description     String        
+  description     String        @db.Text
   impact          Float         // estimated monthly revenue loss
   effortMinutes   Int           // estimated fix time in minutes
-  fixInstructions String        
+  fixInstructions String        @db.Text
   shopifyAdminUrl String?       // direct link to fix in Shopify Admin
   isFixed         Boolean       @default(false)
   fixedAt         DateTime?
   fixedNote       String?       // merchant note on how they fixed it
+  codeFixes       CodeFix[]
 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -134,7 +137,7 @@ model CompetitorSnapshot {
   reviewScore     Float?
   appCount        Int?
   productCount    Int?
-  aiInsight       String?     
+  aiInsight       String?     @db.Text
   capturedAt      DateTime    @default(now())
 
   @@map("competitor_snapshots")
@@ -147,7 +150,7 @@ model ChatMessage {
   merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   sessionId       String    // group messages into conversations
   role            String    // "user" | "assistant"
-  content         String    
+  content         String    @db.Text
   tokensUsed      Int?
   createdAt       DateTime  @default(now())
 
@@ -160,7 +163,7 @@ model StoreMetric {
   id              String    @id @default(uuid())
   merchantId      String
   merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  date            DateTime  
+  date            DateTime  @db.Date
   revenue         Float     @default(0)
   orders          Int       @default(0)
   visitors        Int       @default(0)
@@ -179,10 +182,10 @@ model Report {
   id              String      @id @default(uuid())
   merchantId      String
   merchant        Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  type            String
+  type            ReportType
   period          String      // e.g. "2026-W22" or "2026-05"
-  data            String        // complete report data
-  aiSummary       String?     
+  data            Json        // complete report data
+  aiSummary       String?     @db.Text
   emailSentAt     DateTime?
   createdAt       DateTime    @default(now())
 
@@ -197,12 +200,91 @@ model Notification {
   merchant        Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   type            String    // "new_issue", "issue_fixed", "weekly_report", "competitor_alert"
   title           String
-  body            String    
-  data            String?
+  body            String    @db.Text
+  data            Json?
   isRead          Boolean   @default(false)
   createdAt       DateTime  @default(now())
 
   @@map("notifications")
 }
 
-// Enums removed for SQLite compatibility
+// ── Enums ────────────────────────────────────────────
+enum Plan {
+  FREE
+  GROWTH
+  PRO
+  AGENCY
+}
+
+enum AuditStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum IssuePriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum IssueCategory {
+  SPEED
+  SEO
+  CONVERSION
+  PRODUCT
+  CHECKOUT
+  MOBILE
+  APPS
+}
+
+enum ReportType {
+  WEEKLY
+  MONTHLY
+}
+
+// ── Visual Audit Results ─────────────────────────────
+model VisualAudit {
+  id           String    @id @default(uuid())
+  merchantId   String
+  merchant     Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  auditId      String?
+  status       String    @default("PENDING")
+  plan         String
+  score        Int?
+  pagesScanned Int       @default(0)
+  pageResults  Json?
+  aiAnalysis   String?   @db.Text
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  codeFixes    CodeFix[]
+
+  @@map("visual_audits")
+}
+
+// ── Code Fix Records ──────────────────────────────────
+model CodeFix {
+  id            String       @id @default(uuid())
+  merchantId    String
+  merchant      Merchant     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  issueId       String
+  issue         Issue        @relation(fields: [issueId], references: [id])
+  visualAuditId String?
+  visualAudit   VisualAudit? @relation(fields: [visualAuditId], references: [id])
+  cssCode       String       @db.Text
+  liquidNote    String?      @db.Text
+  explanation   String?
+  riskLevel     String       @default("LOW")
+  status        String       @default("GENERATED")
+  appliedAt     DateTime?
+  revertedAt    DateTime?
+  themeId       String?
+  tokensUsed    Int?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("code_fixes")
+}

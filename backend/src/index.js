@@ -28,6 +28,7 @@ import webhookRoutes from './routes/webhooks.js';
 import notificationRoutes from './routes/notifications.js';
 import gdprRoutes from './routes/gdpr.js';
 import billingRoutes from './routes/billing.js';
+import visualAuditRoutes from './routes/visualAudit.js';
 
 // Jobs scheduler
 import { startScheduler } from './jobs/scheduler.js';
@@ -100,6 +101,7 @@ app.use('/api/gdpr',          express.raw({ type: 'application/json' }));
 app.use('/api/gdpr',          gdprRoutes);
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/billing',       billingRoutes);
+app.use('/api/visual-audit',  visualAuditRoutes);
 
 // ── 404 & Error Handling ──────────────────────────────
 app.use(notFound);

@@ -165,3 +165,72 @@ export function startScheduler() {
 
   logger.info('✅ All cron jobs scheduled');
 }
+
+// ── Visual Audit — runs after main daily audit ────────
+// Only for GROWTH (Advanced), PRO, AGENCY merchants
+cron.schedule('0 4 * * *', async () => {
+  logger.info('⏰ Visual audit job started');
+  try {
+    const merchants = await db.merchant.findMany({
+      where: {
+        isActive: true,
+        plan: { in: ['GROWTH', 'PRO', 'AGENCY'] },
+      },
+      select: { id: true, shopDomain: true, shopName: true, accessToken: true, plan: true },
+    });
+
+    logger.info(`Running visual audits for ${merchants.length} merchants`);
+
+    // Process one at a time — Puppeteer is memory heavy
+    for (const merchant of merchants) {
+      try {
+        // Check if visual audit already ran today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const existing = await db.visualAudit.findFirst({
+          where: { merchantId: merchant.id, createdAt: { gte: today } },
+        });
+        if (existing) continue;
+
+        const { runVisualAudit, VISUAL_FEATURES } = await import('../services/visualAuditEngine.js');
+        const { fetchProducts, createShopifyClient } = await import('../services/shopify.js');
+
+        const config   = VISUAL_FEATURES[merchant.plan];
+        if (!config?.enabled) continue;
+
+        const client   = createShopifyClient(merchant.shopDomain, merchant.accessToken);
+        const products = await fetchProducts(client);
+
+        const visualAudit = await db.visualAudit.create({
+          data: { merchantId: merchant.id, status: 'RUNNING', plan: merchant.plan },
+        });
+
+        const result = await runVisualAudit(merchant.shopDomain, merchant.plan, products.slice(0, 5));
+
+        await db.visualAudit.update({
+          where: { id: visualAudit.id },
+          data: {
+            status:      result.enabled ? 'COMPLETED' : 'FAILED',
+            score:       result.score,
+            pagesScanned: result.pagesScanned || 0,
+            pageResults: result.pageResults,
+            aiAnalysis:  result.aiAnalysis,
+            completedAt: new Date(),
+          },
+        });
+
+        logger.info(`Visual audit complete: ${merchant.shopDomain} score: ${result.score}`);
+
+        // 30 second delay between merchants — Puppeteer memory recovery
+        await new Promise(r => setTimeout(r, 30000));
+
+      } catch (err) {
+        logger.error(`Visual audit failed for ${merchant.shopDomain}: ${err.message}`);
+        await new Promise(r => setTimeout(r, 5000));
+      }
+    }
+    logger.info('⏰ Visual audit job complete');
+  } catch (err) {
+    logger.error('Visual audit job crashed:', err);
+  }
+}, { timezone: 'Asia/Kolkata' });

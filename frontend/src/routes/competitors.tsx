@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Star, Zap, IndianRupee, Package, Sparkles, Clock } from "lucide-react";
-import { formatRelativeMinutes } from "@/lib/mock-data";
-import { useAuth } from "@/contexts/AuthContext";
-import { fetchCompetitors, mapCompetitors } from "@/lib/store-data";
+import { competitorsApi } from "@/lib/api";
+import { useMerchant } from "@/hooks/useMerchant";
+import { SkeletonList } from "@/components/ui/Skeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/competitors")({
   head: () => ({
@@ -56,15 +57,39 @@ function StatBox({
   );
 }
 
+function formatRelativeMinutes(min: number): string {
+  if (min == null) return 'never';
+  if (min < 60) return `${min}m ago`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
 function CompetitorsPage() {
-  const { user } = useAuth();
-  const { data } = useQuery({
+  const { merchant } = useMerchant();
+  const { data: compRes, isPending, isError, refetch } = useQuery({
     queryKey: ["competitors"],
-    queryFn: fetchCompetitors,
-    enabled: !!user,
+    queryFn: () => competitorsApi.getAll(),
+    enabled: !!merchant,
   });
 
-  const competitors = mapCompetitors(data?.competitors ?? []);
+  const competitors = compRes?.competitors || [];
+
+  if (isPending) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <SkeletonList count={3} />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-8">
+        <ErrorState message="Failed to load competitors." onRetry={refetch} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-[1440px] 2xl:max-w-[1720px] px-4 sm:px-6 lg:px-10 xl:px-14 py-6 lg:py-8 xl:py-10">
@@ -73,7 +98,7 @@ function CompetitorsPage() {
           <div className="label-eyebrow">Intelligence</div>
           <h1 className="display text-[28px] font-bold tracking-tight">Competitor Intelligence</h1>
           <p className="text-[14px] mt-1" style={{ color: "var(--text-secondary)" }}>
-            Monitoring {data?.used ?? 0} competitors · Updated every 24 hours
+            Monitoring {compRes?.used ?? competitors.length} competitors · Updated every 24 hours
           </p>
         </div>
         <button className="gradient-emerald text-white font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 glow-emerald hover:opacity-95 active:scale-[0.98] transition">
@@ -82,8 +107,8 @@ function CompetitorsPage() {
       </div>
 
       <div className="space-y-4 mb-6">
-        {competitors.map((competitor, i) => {
-          const threat = threatStyles[competitor.threat];
+        {competitors.map((competitor: any, i: number) => {
+          const threat = threatStyles[competitor.threat as keyof typeof threatStyles] || threatStyles.medium;
           const speedColor = competitor.speed < 3 ? "var(--emerald-brand)" : competitor.speed > 5 ? "var(--danger)" : "var(--warn)";
           return (
             <div key={competitor.name} className="surface-card p-6 animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
@@ -99,7 +124,7 @@ function CompetitorsPage() {
                     <span>{competitor.url}</span>
                     <span className="inline-flex items-center gap-1">
                       <Clock className="size-3" />
-                      Checked {formatRelativeMinutes(competitor.lastCheckedMinutes)}
+                      Checked {formatRelativeMinutes(competitor.lastCheckedMinutes || Math.floor((Date.now() - new Date(competitor.lastCheckedAt || Date.now()).getTime()) / 60000))}
                     </span>
                   </div>
                 </div>
@@ -107,7 +132,7 @@ function CompetitorsPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                 <StatBox icon={Zap} label="Page Speed" value={`${competitor.speed || 0}s`} color={speedColor} />
-                <StatBox icon={IndianRupee} label="Price Range" value={`₹${competitor.priceLow.toLocaleString("en-IN")} - ₹${competitor.priceHigh.toLocaleString("en-IN")}`} />
+                <StatBox icon={IndianRupee} label="Price Range" value={`₹${(competitor.priceLow || 0).toLocaleString("en-IN")} - ₹${(competitor.priceHigh || 0).toLocaleString("en-IN")}`} />
                 <StatBox icon={Star} label="Review Score" value={<Stars rating={competitor.reviews || 0} />} />
                 <StatBox icon={Package} label="Apps Installed" value={`${competitor.apps} apps`} />
               </div>
