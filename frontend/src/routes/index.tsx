@@ -15,7 +15,7 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { Sparkline } from "@/components/Sparkline";
 import { formatINR, formatINRFull } from "@/lib/mock-data";
 import { authApi, auditApi, issuesApi, metricsApi } from "@/lib/api";
-import { SkeletonCard, SkeletonList } from "@/components/ui/Skeleton";
+import { SkeletonCard, SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/")({

@@ -4,7 +4,7 @@ import { Send, Paperclip } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatApi } from "@/lib/api";
 import { useMerchant } from "@/hooks/useMerchant";
-import { SkeletonList } from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/advisor")({

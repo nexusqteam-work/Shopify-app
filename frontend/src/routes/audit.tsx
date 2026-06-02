@@ -7,7 +7,7 @@ import { formatINRFull } from "@/lib/mock-data";
 import { auditApi, issuesApi, visualAuditApi } from "@/lib/api";
 import { useMerchant } from "@/hooks/useMerchant";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
-import { SkeletonCard } from "@/components/ui/Skeleton";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Eye, Lock } from "lucide-react";
 

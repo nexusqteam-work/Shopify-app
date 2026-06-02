@@ -6,7 +6,7 @@ import { ScoreRing } from "@/components/ScoreRing";
 import { formatINR, formatINRFull } from "@/lib/mock-data";
 import { reportsApi, metricsApi, issuesApi, auditApi } from "@/lib/api";
 import { useMerchant } from "@/hooks/useMerchant";
-import { SkeletonCard } from "@/components/ui/Skeleton";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/reports")({

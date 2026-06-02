@@ -6,7 +6,7 @@ import { formatINRFull, type Issue } from "@/lib/mock-data";
 import { useMerchant } from "@/hooks/useMerchant";
 import { issuesApi, visualAuditApi } from "@/lib/api";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
-import { SkeletonList } from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Code, RefreshCw, CheckCircle, Sparkles, Copy } from "lucide-react";
 

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Star, Zap, IndianRupee, Package, Sparkles, Clock } from "lucide-react";
 import { competitorsApi } from "@/lib/api";
 import { useMerchant } from "@/hooks/useMerchant";
-import { SkeletonList } from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 
 export const Route = createFileRoute("/competitors")({

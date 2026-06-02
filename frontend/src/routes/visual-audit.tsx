@@ -6,7 +6,7 @@ import { visualAuditApi, billingApi } from "@/lib/api";
 import { useMerchant } from "@/hooks/useMerchant";
 import { ScoreRing } from "@/components/ScoreRing";
 import { Eye, Lock, Layout, AlertCircle, RefreshCw, AlertTriangle, Code, CheckCircle, Copy, Clock } from "lucide-react";
-import { SkeletonList } from "@/components/ui/Skeleton";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/visual-audit")({
   head: () => ({ meta: [{ title: "Visual Analysis - StoreCoach" }] }),
