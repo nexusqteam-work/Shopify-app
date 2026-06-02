@@ -17,6 +17,7 @@ import { formatINR, formatINRFull } from "@/lib/mock-data";
 import { authApi, auditApi, issuesApi, metricsApi } from "@/lib/api";
 import { SkeletonCard, SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { useMerchant } from "@/hooks/useMerchant";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -90,7 +91,7 @@ function MetricCard({
 
 function Dashboard() {
   const [bannerOpen, setBannerOpen] = useState(true);
-  const { merchant } = useAuth(); // Assuming useMerchant was used or just useAuth
+  const { merchant } = useMerchant();
 
   const { data: metricsData, isPending: loadingMetrics, isError: errorMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ["metrics-summary"],
@@ -150,10 +151,10 @@ function Dashboard() {
     );
   }
 
-  const issues = issuesRes?.issues || [];
-  const issueSummary = issueSummaryRes?.summary || { totalLoss: 0 };
+  const issues = (issuesRes as any)?.issues || [];
+  const issueSummary = (issueSummaryRes as any)?.summary || { totalLoss: 0 };
   const totalLoss = issueSummary.totalLoss;
-  const audit = latestAuditRes?.audit;
+  const audit = (latestAuditRes as any)?.audit;
 
   const categories = audit ? [
     { key: "speed", name: "Store Speed", score: audit.speedScore || 0, emoji: "⚡" },
@@ -167,7 +168,7 @@ function Dashboard() {
   const overallScore = audit?.overallScore || 0;
   const unreadNotifications = 0; // Will be handled by sidebar globally or context
   
-  const metrics = metricsData?.metrics || [];
+  const metrics = (metricsData as any)?.metrics || [];
   const sparklines = {
     revenue: metrics.map((m: any) => m.revenue),
     orders: metrics.map((m: any) => m.orders),
@@ -175,12 +176,12 @@ function Dashboard() {
     conversion: metrics.map((m: any) => m.conversionRate),
   };
 
-  const displayMetrics = metricsData?.summary
+  const displayMetrics = (metricsData as any)?.summary
     ? {
-        revenue: { value: metricsData.summary.totalRevenue ?? 0, change: Number(metricsData.summary.revenueChange) || 0 },
-        orders: { value: metricsData.summary.totalOrders ?? 0, change: 0 },
-        visitors: { value: metricsData.summary.totalVisitors ?? 0, change: 0 },
-        conversion: { value: Number(((metricsData.summary.avgConversionRate ?? 0) * 100).toFixed(1)), change: 0 },
+        revenue: { value: (metricsData as any).summary.totalRevenue ?? 0, change: Number((metricsData as any).summary.revenueChange) || 0 },
+        orders: { value: (metricsData as any).summary.totalOrders ?? 0, change: 0 },
+        visitors: { value: (metricsData as any).summary.totalVisitors ?? 0, change: 0 },
+        conversion: { value: Number((((metricsData as any).summary.avgConversionRate ?? 0) * 100).toFixed(1)), change: 0 },
       }
     : {
         revenue: { value: 0, change: 0 },
