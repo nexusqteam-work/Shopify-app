@@ -34,7 +34,7 @@ import visualAuditRoutes from './routes/visualAudit.js';
 import { startScheduler } from './jobs/scheduler.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
 // ── Trust proxy (for Railway/Render deployment) ──────
 app.set('trust proxy', 1);
@@ -107,17 +107,34 @@ app.use('/api/visual-audit',  visualAuditRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
+/* ------------------ CRASH PROTECTION ------------------ */
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err);
+});
+
+process.on('exit', (code) => {
+  console.log('Process exited with code:', code);
+});
+
 // ── Start Server ──────────────────────────────────────
+console.log("🚀 BEFORE LISTEN");
 app.listen(PORT, async () => {
   logger.info(`🚀 StoreCoach API running on port ${PORT}`);
   logger.info(`🌍 Environment: ${process.env.NODE_ENV}`);
   logger.info(`📦 Database: Connected`);
 
-  // Start background job scheduler
-  if (process.env.NODE_ENV !== 'test') {
-    startScheduler();
-    logger.info('⏰ Job scheduler started');
-  }
+  // ------------------ TEMP: DISABLE SCHEDULER ------------------
+  // Comment out any background jobs for now
+  // if (process.env.NODE_ENV !== 'test') {
+  //   startScheduler();
+  //   logger.info('⏰ Job scheduler started');
+  // }
 });
+
+console.log("🚀 AFTER LISTEN");
 
 export default app;
