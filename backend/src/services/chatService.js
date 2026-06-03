@@ -2,11 +2,11 @@
 //  AI Chat Service — Claude with full store context
 // ═══════════════════════════════════════════════════
 
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { db } from '../utils/db.js';
 import { logger } from '../utils/logger.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ── Build system prompt with live store data ─────────
 async function buildSystemPrompt(merchant) {
@@ -93,24 +93,26 @@ export async function sendChatMessage(merchant, sessionId, userMessage) {
 
   // Build message history for Claude
   const messages = history.map(m => ({
-    role:    m.role,
-    content: m.content,
+    role:    m.role === 'assistant' ? 'model' : 'user',
+    parts:   [{ text: m.content }],
   }));
-  messages.push({ role: 'user', content: userMessage });
+  messages.push({ role: 'user', parts: [{ text: userMessage }] });
 
   // Build fresh system prompt with latest store data
   const systemPrompt = await buildSystemPrompt(merchant);
 
-  // Call Claude
-  const response = await anthropic.messages.create({
-    model:      'claude-sonnet-4-20250514',
-    max_tokens: 1000,
-    system:     systemPrompt,
-    messages,
+  // Call Gemini
+  const response = await ai.models.generateContent({
+    model:      'gemini-2.5-pro',
+    contents:   messages,
+    config: {
+      maxOutputTokens: 1000,
+      systemInstruction: systemPrompt,
+    }
   });
 
-  const assistantMessage = response.content[0]?.text || 'Sorry, I could not generate a response.';
-  const tokensUsed = response.usage?.input_tokens + response.usage?.output_tokens;
+  const assistantMessage = response.text || 'Sorry, I could not generate a response.';
+  const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
 
   // Save assistant response
   await db.chatMessage.create({

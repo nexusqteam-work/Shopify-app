@@ -8,11 +8,11 @@ import { db } from '../utils/db.js';
 import { authenticate } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { validate, addCompetitorSchema } from '../middleware/validation.js';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 
 const router = Router();
 router.use(authenticate);
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Max competitors by plan
 const COMPETITOR_LIMITS = { FREE: 1, GROWTH: 3, PRO: 10, AGENCY: 25 };
@@ -136,12 +136,12 @@ export async function snapshotCompetitor(competitor, merchant) {
     const prompt = `Competitor: ${competitor.storeUrl} | Load time: ${speedScore ? speedScore + 's' : 'unknown'} | Niche: ${competitor.niche || 'ecommerce'} | ${mySpeed}
 Write ONE sharp competitive insight for the merchant. Max 20 words. Be specific and actionable.`;
 
-    const response = await anthropic.messages.create({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 60,
-      messages:   [{ role: 'user', content: prompt }],
+    const response = await ai.models.generateContent({
+      model:      'gemini-2.5-flash',
+      contents:   prompt,
+      config:     { maxOutputTokens: 60 },
     });
-    aiInsight = response.content[0]?.text?.trim();
+    aiInsight = response.text?.trim();
   } catch (e) {
     logger.warn('AI competitor insight failed:', e.message);
   }

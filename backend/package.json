@@ -14,7 +14,7 @@
     "jobs:start": "node src/jobs/scheduler.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.20.0",
+    "@google/genai": "^2.7.0",
     "@prisma/client": "^5.10.0",
     "@shopify/shopify-api": "^9.3.0",
     "axios": "^1.6.7",
@@ -34,8 +34,8 @@
     "morgan": "^1.10.0",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.11",
-    "uuid": "^9.0.0",
     "puppeteer": "^22.0.0",
+    "uuid": "^9.0.0",
     "winston": "^3.12.0",
     "zod": "^3.22.4"
   },

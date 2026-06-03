@@ -4,11 +4,11 @@
 //  Available: PRO (suggest only) + AGENCY (auto-apply)
 // ═══════════════════════════════════════════════════
 
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { logger } from '../utils/logger.js';
 import { createShopifyClient } from './shopify.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ── Shopify theme file registry ──────────────────────
 // Maps issue types to which theme files to fetch
@@ -112,13 +112,13 @@ RULES:
 Return ONLY the JSON object. No other text.`;
 
   try {
-    const response = await anthropic.messages.create({
-      model:      'claude-sonnet-4-20250514',
-      max_tokens: 800,
-      messages:   [{ role: 'user', content: prompt }],
+    const response = await ai.models.generateContent({
+      model:      'gemini-2.5-pro',
+      contents:   prompt,
+      config:     { maxOutputTokens: 800 },
     });
 
-    const raw = response.content[0]?.text?.trim();
+    const raw = response.text?.trim();
 
     // Parse JSON response
     const clean   = raw.replace(/```json|```/g, '').trim();
@@ -135,7 +135,7 @@ Return ONLY the JSON object. No other text.`;
       explanation: fixData.explanation,
       riskLevel:  fixData.riskLevel,
       reversible: fixData.reversible,
-      tokensUsed: response.usage?.input_tokens + response.usage?.output_tokens,
+      tokensUsed: response.usageMetadata?.totalTokenCount,
     };
 
   } catch (err) {

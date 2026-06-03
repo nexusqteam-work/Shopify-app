@@ -2,12 +2,12 @@
 //  Report Service — Weekly & Monthly AI Reports
 // ═══════════════════════════════════════════════════
 
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { db } from '../utils/db.js';
 import { logger } from '../utils/logger.js';
 import { sendEmail } from './emailService.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ── Generate weekly report for a merchant ────────────
 export async function generateWeeklyReport(merchantId) {
@@ -125,12 +125,12 @@ Store health score: ${data.auditScore}/100
 Write in a direct, helpful tone. Mention one specific win and one key priority for next week.`;
 
   try {
-    const res = await anthropic.messages.create({
-      model:      'claude-sonnet-4-20250514',
-      max_tokens: 200,
-      messages:   [{ role: 'user', content: prompt }],
+    const res = await ai.models.generateContent({
+      model:      'gemini-2.5-pro',
+      contents:   prompt,
+      config:     { maxOutputTokens: 200 },
     });
-    return res.content[0]?.text || '';
+    return res.text || '';
   } catch (err) {
     logger.error('Report AI summary failed:', err);
     return `This week ${data.merchant.name} generated ₹${data.thisWeek.revenue.toLocaleString('en-IN')} in revenue with ${data.thisWeek.orders} orders. Focus on fixing the ${data.issues.open} open store issues to improve performance next week.`;

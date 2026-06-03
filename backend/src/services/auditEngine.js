@@ -3,7 +3,7 @@
 //  Analyzes a Shopify store and generates issues
 // ═══════════════════════════════════════════════════
 
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 import { db } from '../utils/db.js';
 import { logger } from '../utils/logger.js';
@@ -16,7 +16,7 @@ import {
   fetchPages,
 } from './shopify.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ── Main audit orchestrator ──────────────────────────
 export async function runFullAudit(auditId, merchant) {
@@ -502,12 +502,12 @@ Total Estimated Monthly Loss: ₹${issues.reduce((s, i) => s + i.impact, 0).toLo
 Write a clear, direct executive summary. Mention the biggest pain point, the estimated revenue impact, and one key priority. Be specific and actionable. No fluff.`;
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
-      messages: [{ role: 'user', content: prompt }],
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: prompt,
+      config: { maxOutputTokens: 300 },
     });
-    return response.content[0]?.text || '';
+    return response.text || '';
   } catch (err) {
     logger.error('AI summary generation failed:', err);
     return `${shopName} scored ${overallScore}/100 in this audit with ${issues.length} issues found. The top priority is addressing ${issues[0]?.title || 'performance issues'} which is estimated to cost ₹${issues[0]?.impact?.toLocaleString('en-IN') || 0}/month. Focus on the critical issues first for maximum revenue recovery.`;

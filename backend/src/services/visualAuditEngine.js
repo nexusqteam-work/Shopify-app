@@ -6,10 +6,10 @@
 // ═══════════════════════════════════════════════════
 
 import puppeteer from 'puppeteer';
-import Anthropic  from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { logger } from '../utils/logger.js';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // ── Plan limits for visual analysis ─────────────────
 export const VISUAL_PLAN_CONFIG = {
@@ -837,12 +837,12 @@ Total issues: ${issues.length}
 Write a 2-sentence executive summary. Be specific about the biggest visual conversion problem and its business impact. Use Indian rupees.`;
 
   try {
-    const response = await anthropic.messages.create({
-      model:      'claude-haiku-4-5-20251001',
-      max_tokens: 150,
-      messages:   [{ role: 'user', content: prompt }],
+    const response = await ai.models.generateContent({
+      model:      'gemini-2.5-flash',
+      contents:   prompt,
+      config:     { maxOutputTokens: 150 },
     });
-    return response.content[0]?.text?.trim() || '';
+    return response.text?.trim() || '';
   } catch (err) {
     logger.warn('Visual insights AI call failed:', err.message);
     return `Visual analysis found ${issues.length} conversion issues with an estimated ₹${totalImpact.toLocaleString('en-IN')}/month revenue impact. The highest priority fix is: ${issues[0]?.title}.`;
