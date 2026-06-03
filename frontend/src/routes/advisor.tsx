@@ -26,8 +26,8 @@ const SUGGESTIONS = [
   "How can I increase my AOV?",
 ];
 
-const WELCOME =
-  "Hi! I'm your AI Store Coach. I have full access to your store — 312 orders, 87 products, 11 apps, and your complete audit results.\n\nAsk me anything:\n• Why did my sales drop?\n• Which products to promote?\n• How do I fix the speed issue?\n• What should I focus on this week?";
+const getWelcomeMessage = (shopName?: string) =>
+  `Hi! I'm your AI Store Coach for ${shopName || 'your store'}. I have full access to your live Shopify data and your complete audit results.\n\nAsk me anything:\n• Why did my sales drop?\n• Which products to promote?\n• How do I fix the speed issue?\n• What should I focus on this week?`;
 
 function nowTs() {
   return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
@@ -57,7 +57,7 @@ function AdvisorPage() {
   const messages = useMemo(() => {
     const rawMessages = historyRes?.messages || [];
     if (rawMessages.length === 0) {
-      return [{ role: "ai", text: WELCOME, ts: nowTs(), _id: "welcome" }];
+      return [{ role: "ai", text: getWelcomeMessage(merchant?.shopName), ts: nowTs(), _id: "welcome" }];
     }
     return rawMessages.map((m: any) => ({
       role: m.role,
@@ -65,7 +65,7 @@ function AdvisorPage() {
       ts: new Date(m.createdAt || Date.now()).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
       _id: m.id || Math.random().toString(),
     }));
-  }, [historyRes]);
+  }, [historyRes, merchant?.shopName]);
 
   // Optimistic typing or pending state
   const typing = sendMutation.isPending;
