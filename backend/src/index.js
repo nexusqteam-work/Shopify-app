@@ -86,6 +86,10 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.send('StoreCoach API is running');
+});
+
 // ── API Routes ────────────────────────────────────────
 app.use('/api/auth',          authRoutes);
 app.use('/api/shopify',       shopifyRoutes);
@@ -97,7 +101,6 @@ app.use('/api/metrics',       metricsRoutes);
 app.use('/api/reports',       reportRoutes);
 app.use('/api/webhooks',      webhookRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/gdpr',          express.raw({ type: 'application/json' }));
 app.use('/api/gdpr',          gdprRoutes);
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
 app.use('/api/billing',       billingRoutes);
@@ -122,17 +125,8 @@ process.on('exit', (code) => {
 
 // ── Start Server ──────────────────────────────────────
 console.log("🚀 BEFORE LISTEN");
-app.listen(PORT, async () => {
-  logger.info(`🚀 StoreCoach API running on port ${PORT}`);
-  logger.info(`🌍 Environment: ${process.env.NODE_ENV}`);
-  logger.info(`📦 Database: Connected`);
-
-  // ------------------ TEMP: DISABLE SCHEDULER ------------------
-  // Comment out any background jobs for now
-  // if (process.env.NODE_ENV !== 'test') {
-  //   startScheduler();
-  //   logger.info('⏰ Job scheduler started');
-  // }
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 console.log("🚀 AFTER LISTEN");
