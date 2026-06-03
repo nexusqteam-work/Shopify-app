@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem('sc_token');
         }
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error('Failed to authenticate:', error);
         setMerchant(null);
         localStorage.removeItem('sc_token');

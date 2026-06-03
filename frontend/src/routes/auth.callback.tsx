@@ -33,7 +33,7 @@ function AuthCallback() {
           localStorage.removeItem('sc_token');
         }
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error('Callback auth error:', err);
         setError('Authentication failed: Could not verify token with the server.');
         localStorage.removeItem('sc_token');

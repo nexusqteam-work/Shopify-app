@@ -59,7 +59,7 @@ function Connect() {
               onChange={(e) => setShopDomain(e.target.value)}
               disabled={isLoading}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-              style={{ borderColor: 'var(--border)', focusRing: 'var(--emerald-brand)' }}
+              style={{ borderColor: 'var(--border)' }}
             />
             {error && <p className="mt-1.5 text-sm text-[var(--danger)]">{error}</p>}
           </div>
