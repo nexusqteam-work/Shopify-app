@@ -21,9 +21,9 @@ export const VISUAL_PLAN_CONFIG = {
 };
 
 export const VISUAL_FEATURES = {
-  FREE:   { enabled: false, pages: 0,  checks: 0,  codeGen: false, autoFix: false },
-  GROWTH: { enabled: true,  pages: 2,  checks: 10, codeGen: false, autoFix: false }, // Advanced ₹1,999
-  PRO:    { enabled: true,  pages: 6,  checks: 30, codeGen: true,  autoFix: false }, // Pro ₹2,999
+  FREE:   { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  },
+  GROWTH: { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Advanced ₹1,999
+  PRO:    { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Pro ₹2,999
   AGENCY: { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Agent ₹29,999
 };
 

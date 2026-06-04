@@ -133,16 +133,22 @@ router.get('/callback', async (req, res) => {
   }
 });
 
-// POST /api/shopify/billing/activate — Activate paid plan
+// POST /api/shopify/billing/activate — Activate paid plan (temporarily bypass Shopify billing for testing)
 router.post('/billing/activate', authenticate, async (req, res, next) => {
   try {
     const { plan } = req.body;
     if (!['GROWTH', 'PRO', 'AGENCY'].includes(plan)) {
       return res.status(400).json({ success: false, error: 'Invalid plan' });
     }
-    const client = createShopifyClient(req.merchant.shopDomain, req.merchant.accessToken);
-    const charge  = await createBillingCharge(client, plan);
-    res.json({ success: true, confirmationUrl: charge.confirmation_url });
+
+    // Directly update the merchant plan to the requested tier
+    await db.merchant.update({
+      where: { id: req.merchant.id },
+      data: { plan, planExpiresAt: null },
+    });
+
+    const redirectUrl = `${process.env.FRONTEND_URL}?billing=success`;
+    res.json({ success: true, confirmationUrl: redirectUrl });
   } catch (err) { next(err); }
 });
 

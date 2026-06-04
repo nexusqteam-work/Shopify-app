@@ -14,7 +14,7 @@ const router = Router();
 router.use(authenticate);
 
 // Daily chat message limits by plan
-const CHAT_LIMITS = { FREE: 10, GROWTH: 100, PRO: 9999, AGENCY: 9999 };
+const CHAT_LIMITS = { FREE: 9999, GROWTH: 9999, PRO: 9999, AGENCY: 9999 };
 
 async function enforceChatLimit(req, res, next) {
   const limit = CHAT_LIMITS[req.merchant.plan] || 10;
