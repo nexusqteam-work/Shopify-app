@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { API_URL } from '../config/env';
+import logoUrl from '../assets/Logo.png';
 
 export const Route = createFileRoute('/connect')({
   component: Connect,
@@ -35,10 +36,8 @@ function Connect() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="surface-card w-full max-w-md p-8 animate-fade-up">
         <div className="text-center mb-8">
-          <div className="mx-auto size-12 bg-[var(--emerald-brand)] rounded-xl flex items-center justify-center mb-4">
-            <svg className="size-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="mx-auto size-14 bg-white rounded-2xl flex items-center justify-center mb-4 border shadow-sm overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+            <img src={logoUrl} alt="StoreCoach Logo" className="size-10 object-contain" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Connect your Shopify store</h1>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>

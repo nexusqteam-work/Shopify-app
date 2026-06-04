@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import logoUrl from "../assets/Logo.png";
 import {
   Home,
   Radar,
@@ -101,8 +102,8 @@ export function Sidebar() {
         style={{ borderColor: "var(--border)" }}
       >
         <Link to="/" className="flex items-center gap-2">
-          <div className="size-8 rounded-lg gradient-emerald flex items-center justify-center glow-emerald">
-            <Cpu className="size-4 text-white" strokeWidth={2.5} />
+          <div className="size-8 rounded-lg bg-white flex items-center justify-center border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+            <img src={logoUrl} alt="StoreCoach Logo" className="size-6 object-contain" />
           </div>
           <span className="display font-bold text-[16px] tracking-tight">StoreCoach</span>
         </Link>
@@ -157,8 +158,8 @@ export function Sidebar() {
             <X className="size-4" />
           </button>
           <div className="flex items-center gap-2.5">
-            <div className="size-9 rounded-xl gradient-emerald flex items-center justify-center glow-emerald">
-              <Cpu className="size-4.5 text-white" strokeWidth={2.5} />
+            <div className="size-9 rounded-xl bg-white flex items-center justify-center border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+              <img src={logoUrl} alt="StoreCoach Logo" className="size-7 object-contain" />
             </div>
             <div>
               <div className="display font-bold text-[18px] leading-none tracking-tight">StoreCoach</div>
