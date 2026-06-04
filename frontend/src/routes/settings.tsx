@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Bell, Lock, CreditCard, Store as StoreIcon, Sparkles, Eye } from "lucide-react";
 import { useMerchant } from "@/hooks/useMerchant";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -50,12 +51,47 @@ function Section({
 }
 
 function Toggle({ label, defaultChecked = false }: { label: string; defaultChecked?: boolean }) {
+  const storageKey = `setting_${label.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`;
+  
+  const [checked, setChecked] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(storageKey);
+      if (saved !== null) {
+        return saved === "true";
+      }
+    }
+    return defaultChecked;
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setChecked(isChecked);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(storageKey, String(isChecked));
+    }
+  };
+
   return (
-    <label className="flex items-center justify-between py-2.5 border-t" style={{ borderColor: "var(--border)" }}>
+    <label className="flex items-center justify-between py-2.5 border-t select-none cursor-pointer" style={{ borderColor: "var(--border)" }}>
       <span className="text-[13px]">{label}</span>
-      <input type="checkbox" defaultChecked={defaultChecked} className="peer sr-only" />
-      <span className="relative w-10 h-5.5 rounded-full transition-colors cursor-pointer" style={{ background: "var(--muted)" }}>
-        <span className="absolute top-0.5 left-0.5 size-4.5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4.5" />
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={handleChange}
+        className="sr-only"
+      />
+      <span
+        className="relative w-10 h-5.5 rounded-full transition-colors duration-200"
+        style={{
+          backgroundColor: checked ? "var(--emerald-brand)" : "var(--muted)",
+        }}
+      >
+        <span
+          className="absolute top-0.5 left-0.5 size-4.5 rounded-full bg-white shadow transition-transform duration-200"
+          style={{
+            transform: checked ? "translateX(1.125rem)" : "translateX(0)",
+          }}
+        />
       </span>
     </label>
   );
