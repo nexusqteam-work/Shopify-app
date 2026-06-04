@@ -207,7 +207,7 @@ async function scanPage(url, pageType, shopDomain) {
     }
 
     // Wait for dynamic content
-    await page.waitForTimeout(1500);
+    await new Promise(r => setTimeout(r, 1500));
 
     // ── Extract mobile DOM data ─────────────────────
     results.mobile = await page.evaluate((pType) => {
@@ -370,7 +370,7 @@ async function scanPage(url, pageType, shopDomain) {
     // ── DESKTOP SCAN (1440×900) ─────────────────────
     await page.setViewport({ width: 1440, height: 900, isMobile: false });
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1000);
+    await new Promise(r => setTimeout(r, 1000));
 
     results.desktop = await page.evaluate(() => {
       const vw = window.innerWidth;

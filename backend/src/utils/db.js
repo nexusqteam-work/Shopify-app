@@ -22,7 +22,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 db.$on('error', (e) => {
-  logger.error('Prisma error:', e);
+  logger.error(`Prisma error: ${e.message || JSON.stringify(e) || e}`);
 });
 
 if (process.env.NODE_ENV !== 'production') {
