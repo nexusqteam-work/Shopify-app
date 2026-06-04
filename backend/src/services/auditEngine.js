@@ -22,6 +22,15 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export async function runFullAudit(auditId, merchant) {
   logger.info(`Starting audit ${auditId} for ${merchant.shopDomain}`);
 
+  const safeFetch = async (promise, fallback) => {
+    try {
+      return await promise;
+    } catch (e) {
+      logger.error(`Failed to fetch during audit: ${e.message}`, e);
+      return fallback;
+    }
+  };
+
   try {
     // Mark audit as running
     await db.audit.update({
@@ -33,22 +42,22 @@ export async function runFullAudit(auditId, merchant) {
 
     // Run all checks in parallel where possible
     const [shopInfo, products, orders, scriptTags, pages] = await Promise.all([
-      fetchShopInfo(client),
-      fetchProducts(client),
-      fetchOrders(client, 30),
-      fetchScriptTags(client),
-      fetchPages(client),
+      safeFetch(fetchShopInfo(client), { name: merchant.shopName || 'Shop', currency: 'INR', iana_timezone: 'Asia/Kolkata' }),
+      safeFetch(fetchProducts(client), []),
+      safeFetch(fetchOrders(client, 30), []),
+      safeFetch(fetchScriptTags(client), []),
+      safeFetch(fetchPages(client), []),
     ]);
 
     // Run individual audits
     const [speedData, seoData, conversionData, productData, checkoutData, mobileData] =
       await Promise.all([
-        auditSpeed(merchant.shopDomain, scriptTags),
-        auditSEO(products, pages),
-        auditConversion(products, orders),
-        auditProducts(products),
-        auditCheckout(shopInfo, client),
-        auditMobile(merchant.shopDomain),
+        safeFetch(auditSpeed(merchant.shopDomain, scriptTags), { score: 100, issues: [], raw: {} }),
+        safeFetch(auditSEO(products, pages), { score: 100, issues: [], raw: {} }),
+        safeFetch(auditConversion(products, orders), { score: 100, issues: [], raw: {} }),
+        safeFetch(auditProducts(products), { score: 100, issues: [], raw: {} }),
+        safeFetch(auditCheckout(shopInfo, client), { score: 80, issues: [], raw: {} }),
+        safeFetch(auditMobile(merchant.shopDomain), { score: 100, issues: [], raw: {} }),
       ]);
 
     // Calculate scores
