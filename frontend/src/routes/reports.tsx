@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Mail, Sparkles, TrendingUp, TrendingDown } from "lucide-react";
 import { ScoreRing } from "@/components/ScoreRing";
@@ -157,12 +156,12 @@ function ReportsPage() {
   const currentLoadTime = latestAuditRes?.audit?.speedScore ? Math.max(1, Number((10 - latestAuditRes.audit.speedScore / 10).toFixed(1))) : 0;
   const issueSummaryData = issueSummaryRes?.summary || { total: 0, fixed: 0, open: 0, critical: 0, totalLoss: 0 };
 
-  const weeklyStats = useMemo(() => ({
+  const weeklyStats = {
     revenue: { value: currentRevenue, change: calculatePeriodChanges(currentRevenue, previousRevenue) },
     orders: { value: currentOrders, change: calculatePeriodChanges(currentOrders, previousOrders) },
     newCustomers: { value: currentCustomers, change: calculatePeriodChanges(currentCustomers, previousCustomers) },
     loadTime: { value: currentLoadTime, change: 0 },
-  }), [currentRevenue, previousRevenue, currentOrders, previousOrders, currentCustomers, previousCustomers, currentLoadTime]);
+  };
 
   return (
     <div className="mx-auto w-full max-w-[1440px] 2xl:max-w-[1720px] px-4 sm:px-6 lg:px-10 xl:px-14 py-6 lg:py-8 xl:py-10">
