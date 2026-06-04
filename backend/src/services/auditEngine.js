@@ -512,7 +512,7 @@ Write a clear, direct executive summary. Mention the biggest pain point, the est
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-3.5-flash',
       contents: prompt,
       config: { maxOutputTokens: 300 },
     });

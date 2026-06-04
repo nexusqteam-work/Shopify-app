@@ -137,7 +137,7 @@ export async function snapshotCompetitor(competitor, merchant) {
 Write ONE sharp competitive insight for the merchant. Max 20 words. Be specific and actionable.`;
 
     const response = await ai.models.generateContent({
-      model:      'gemini-2.5-flash',
+      model:      'gemini-3.5-flash',
       contents:   prompt,
       config:     { maxOutputTokens: 60 },
     });

@@ -159,7 +159,7 @@ export async function sendChatMessage(merchant, sessionId, userMessage) {
     }
 
     const response = await ai.models.generateContent({
-      model:      'gemini-2.5-pro',
+      model:      'gemini-3.5-flash',
       contents:   messages,
       config: {
         maxOutputTokens: 1000,

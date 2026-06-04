@@ -126,7 +126,7 @@ Write in a direct, helpful tone. Mention one specific win and one key priority f
 
   try {
     const res = await ai.models.generateContent({
-      model:      'gemini-2.5-pro',
+      model:      'gemini-3.5-flash',
       contents:   prompt,
       config:     { maxOutputTokens: 200 },
     });
