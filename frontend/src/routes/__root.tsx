@@ -120,6 +120,7 @@ function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth();
   const { location } = useRouter().state;
   const isPublicRoute = ['/connect', '/auth/callback', '/pricing'].includes(location.pathname);
+  const showSidebar = isAuthenticated && !['/connect', '/auth/callback'].includes(location.pathname);
 
   if (isLoading) {
     return <div className="min-h-screen" style={{ background: "var(--background)" }} />;
@@ -133,11 +134,11 @@ function AppLayout() {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--background)" }}>
-      {isAuthenticated && !isPublicRoute && <Sidebar />}
-      <main className={isAuthenticated && !isPublicRoute ? "lg:ml-60 min-h-screen pt-14 lg:pt-0" : "min-h-screen"}>
+      {showSidebar && <Sidebar />}
+      <main className={showSidebar ? "lg:ml-60 min-h-screen pt-14 lg:pt-0" : "min-h-screen"}>
         <Outlet />
       </main>
-      {isAuthenticated && !isPublicRoute && <FloatingAdvisor />}
+      {showSidebar && <FloatingAdvisor />}
     </div>
   );
 }
