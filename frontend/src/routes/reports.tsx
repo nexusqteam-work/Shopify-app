@@ -109,11 +109,7 @@ function ReportsPage() {
   });
 
   const emailMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // Stub until backend supports it, or use if added
-      await new Promise(r => setTimeout(r, 1000));
-      return { success: true };
-    },
+    mutationFn: (id: string) => reportsApi.email(id),
   });
 
   const isPending = loadingReports || loadingMetrics || loadingIssues || loadingAudit;

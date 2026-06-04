@@ -60,8 +60,12 @@ router.get('/latest', async (req, res, next) => {
       where:   { merchantId: req.merchant.id, status: 'COMPLETED' },
       orderBy: { completedAt: 'desc' },
     });
-    if (!audit) return res.status(404).json({ success: false, error: 'No completed audit found' });
-    res.json({ success: true, audit });
+    res.json({
+      success: true,
+      audit: audit || null,
+      hasAudit: !!audit,
+      message: audit ? undefined : 'No completed audit found yet',
+    });
   } catch (err) { next(err); }
 });
 

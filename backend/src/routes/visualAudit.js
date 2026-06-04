@@ -296,10 +296,12 @@ router.get('/latest', requireVisualAccess, async (req, res, next) => {
       where:   { merchantId: req.merchant.id, status: 'COMPLETED' },
       orderBy: { completedAt: 'desc' },
     });
-    if (!audit) {
-      return res.status(404).json({ success: false, error: 'No completed visual audit found. Run your first scan.' });
-    }
-    res.json({ success: true, audit });
+    res.json({
+      success: true,
+      audit: audit || null,
+      hasAudit: !!audit,
+      message: audit ? undefined : 'No completed visual audit found yet',
+    });
   } catch (err) { next(err); }
 });
 
@@ -361,7 +363,16 @@ router.post('/generate-fix/:issueId', requireCodeGen, async (req, res, next) => 
       orderBy: { createdAt: 'desc' },
     });
     if (existing) {
-      return res.json({ success: true, codeFix: existing, cached: true });
+      return res.json({
+        success: true,
+        cached: true,
+        codeFix: existing,
+        codeFixId: existing.id,
+        code: existing.cssCode,
+        cssCode: existing.cssCode,
+        riskLevel: existing.riskLevel,
+        explanation: existing.explanation,
+      });
     }
 
     // Generate new fix
@@ -389,6 +400,11 @@ router.post('/generate-fix/:issueId', requireCodeGen, async (req, res, next) => 
     res.json({
       success: true,
       codeFix,
+      codeFixId: codeFix.id,
+      code: codeFix.cssCode,
+      cssCode: codeFix.cssCode,
+      riskLevel: codeFix.riskLevel,
+      explanation: codeFix.explanation,
       message: req.merchant.plan === 'AGENCY'
         ? 'Fix generated. Use /apply-fix to auto-apply, or review and apply manually.'
         : 'Fix generated. Copy the CSS code and add it to your theme.',
@@ -539,14 +555,22 @@ router.get('/code-fixes', requireCodeGen, async (req, res, next) => {
       },
     });
 
+    const normalizedFixes = fixes.map(fix => ({
+      ...fix,
+      title: fix.issue?.title || 'Untitled fix',
+      category: fix.issue?.category || null,
+      priority: fix.issue?.priority || null,
+      impact: fix.issue?.impact || null,
+    }));
+
     res.json({
       success: true,
-      fixes,
+      fixes: normalizedFixes,
       summary: {
-        total:    fixes.length,
-        applied:  fixes.filter(f => f.status === 'APPLIED').length,
-        reverted: fixes.filter(f => f.status === 'REVERTED').length,
-        pending:  fixes.filter(f => f.status === 'GENERATED').length,
+        total:    normalizedFixes.length,
+        applied:  normalizedFixes.filter(f => f.status === 'APPLIED').length,
+        reverted: normalizedFixes.filter(f => f.status === 'REVERTED').length,
+        pending:  normalizedFixes.filter(f => f.status === 'GENERATED').length,
       },
     });
   } catch (err) { next(err); }

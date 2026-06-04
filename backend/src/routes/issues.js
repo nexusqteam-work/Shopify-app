@@ -93,15 +93,19 @@ router.get('/summary/stats', async (req, res, next) => {
     const open   = all.filter(i => !i.isFixed);
     const fixed  = all.filter(i => i.isFixed);
     const critical = open.filter(i => i.priority === 'CRITICAL').length;
-
-    res.json({
-      success: true,
+    const summary = {
       total:      all.length,
       open:       open.length,
       fixed:      fixed.length,
       critical,
       totalLoss:      open.reduce((s, i) => s + i.impact, 0),
       totalRecovered: fixed.reduce((s, i) => s + i.impact, 0),
+    };
+
+    res.json({
+      success: true,
+      ...summary,
+      summary,
     });
   } catch (err) { next(err); }
 });

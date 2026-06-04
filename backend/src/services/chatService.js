@@ -8,6 +8,34 @@ import { logger } from '../utils/logger.js';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+function buildFallbackReply(merchant, latestAudit, issues, metrics, userMessage) {
+  const topIssue = issues[0];
+  const latestRevenue = metrics.reduce((sum, metric) => sum + (metric.revenue || 0), 0);
+  const latestOrders = metrics.reduce((sum, metric) => sum + (metric.orders || 0), 0);
+
+  const genericAdvice = topIssue
+    ? `Your highest-priority issue right now is "${topIssue.title}", worth about Rs ${Math.round(topIssue.impact).toLocaleString('en-IN')} per month. Start there, then run a fresh scan to confirm the improvement.`
+    : `I can see your store is connected, but there is no completed audit yet. Run a new store scan first so I can give store-specific recommendations.`;
+
+  const question = userMessage.toLowerCase();
+
+  if (question.includes('sales') || question.includes('revenue')) {
+    return `In the last available data window, ${merchant.shopName} shows about Rs ${Math.round(latestRevenue).toLocaleString('en-IN')} in revenue from ${latestOrders} orders. ${genericAdvice}`;
+  }
+
+  if (question.includes('speed')) {
+    return latestAudit
+      ? `Your latest speed score is ${latestAudit.speedScore ?? 'not available'}/100. ${genericAdvice}`
+      : `I do not have a completed audit yet, so I cannot confirm the store speed score. Run a new scan first, then I can point to the exact speed blockers.`;
+  }
+
+  if (question.includes('fix') || question.includes('first') || question.includes('priority')) {
+    return genericAdvice;
+  }
+
+  return `I could not reach the AI provider just now, so here is the safest store-based answer I can give. ${genericAdvice}`;
+}
+
 // ── Build system prompt with live store data ─────────
 async function buildSystemPrompt(merchant) {
   // Fetch latest audit
@@ -72,6 +100,27 @@ YOUR ROLE:
 - Prioritize by revenue impact always`;
 }
 
+async function getStoreContext(merchant) {
+  const [latestAudit, issues, metrics] = await Promise.all([
+    db.audit.findFirst({
+      where: { merchantId: merchant.id, status: 'COMPLETED' },
+      orderBy: { completedAt: 'desc' },
+    }),
+    db.issue.findMany({
+      where: { merchantId: merchant.id, isFixed: false },
+      orderBy: { impact: 'desc' },
+      take: 10,
+    }),
+    db.storeMetric.findMany({
+      where: { merchantId: merchant.id },
+      orderBy: { date: 'desc' },
+      take: 30,
+    }),
+  ]);
+
+  return { latestAudit, issues, metrics };
+}
+
 // ── Send message and get AI response ────────────────
 export async function sendChatMessage(merchant, sessionId, userMessage) {
   // Fetch conversation history
@@ -98,21 +147,36 @@ export async function sendChatMessage(merchant, sessionId, userMessage) {
   }));
   messages.push({ role: 'user', parts: [{ text: userMessage }] });
 
-  // Build fresh system prompt with latest store data
+  const { latestAudit, issues, metrics } = await getStoreContext(merchant);
   const systemPrompt = await buildSystemPrompt(merchant);
 
-  // Call Gemini
-  const response = await ai.models.generateContent({
-    model:      'gemini-2.5-pro',
-    contents:   messages,
-    config: {
-      maxOutputTokens: 1000,
-      systemInstruction: systemPrompt,
-    }
-  });
+  let assistantMessage = '';
+  let tokensUsed = 0;
 
-  const assistantMessage = response.text || 'Sorry, I could not generate a response.';
-  const tokensUsed = response.usageMetadata?.totalTokenCount || 0;
+  try {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured');
+    }
+
+    const response = await ai.models.generateContent({
+      model:      'gemini-2.5-pro',
+      contents:   messages,
+      config: {
+        maxOutputTokens: 1000,
+        systemInstruction: systemPrompt,
+      }
+    });
+
+    assistantMessage = response.text || '';
+    tokensUsed = response.usageMetadata?.totalTokenCount || 0;
+  } catch (err) {
+    logger.error('AI chat generation failed:', err);
+    assistantMessage = buildFallbackReply(merchant, latestAudit, issues, metrics, userMessage);
+  }
+
+  if (!assistantMessage) {
+    assistantMessage = 'I could not generate a response right now. Please try again after running a fresh store scan.';
+  }
 
   // Save assistant response
   await db.chatMessage.create({

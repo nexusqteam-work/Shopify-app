@@ -25,13 +25,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('sc_token');
-    
-    if (!token) {
-      setMerchant(null);
-      setIsLoading(false);
-      return;
-    }
-
     authApi.getMe()
       .then((data: any) => {
         if (data.success && data.merchant) {
@@ -44,7 +37,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch((error: any) => {
         console.error('Failed to authenticate:', error);
         setMerchant(null);
-        localStorage.removeItem('sc_token');
+        if (token) {
+          localStorage.removeItem('sc_token');
+        }
       })
       .finally(() => {
         setIsLoading(false);

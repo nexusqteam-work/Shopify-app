@@ -23,7 +23,11 @@ function Connect() {
       return;
     }
 
-    if (!shop || !shop.endsWith('.myshopify.com') || localStorage.getItem('sc_token')) {
+    if (!shop || !shop.endsWith('.myshopify.com')) {
+      return;
+    }
+
+    if (localStorage.getItem('sc_token')) {
       return;
     }
 
@@ -31,18 +35,17 @@ function Connect() {
     setIsLoading(true);
     setError('');
 
-    authApi.exchangeShopToken(shop)
+    authApi.getMe()
       .then((data: any) => {
-        if (!data?.success || !data?.token) {
-          throw new Error('No token returned');
+        if (!data?.success || !data?.merchant) {
+          throw new Error('No active session');
         }
 
-        localStorage.setItem('sc_token', data.token);
         window.location.href = `/${window.location.search}`;
       })
       .catch((err: any) => {
         console.error('Embedded Shopify login failed:', err);
-        setError('We could not finish the Shopify app login automatically. You can reconnect the store below.');
+        setError('');
       })
       .finally(() => {
         setIsLoading(false);

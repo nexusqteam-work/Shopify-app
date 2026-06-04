@@ -13,7 +13,7 @@ api.interceptors.request.use((config: any) => {
 api.interceptors.response.use(
   (res: any) => res.data,
   (err: any) => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 && !err.config?.skipAuthRedirect) {
       localStorage.removeItem('sc_token');
       window.location.href = `/connect${window.location.search}`;
     }
@@ -22,8 +22,7 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-  getMe: () => api.get('/api/auth/me'),
-  exchangeShopToken: (shopDomain: string) => api.post('/api/auth/token', { shopDomain }),
+  getMe: () => api.get('/api/auth/me', { skipAuthRedirect: true }),
   logout: () => api.post('/api/auth/logout'),
 };
 
@@ -72,6 +71,7 @@ export const reportsApi = {
   getAll:    () => api.get('/api/reports'),
   getById:   (id: string) => api.get(`/api/reports/${id}`),
   generate:  () => api.post('/api/reports/generate'),
+  email:     (id: string) => api.post(`/api/reports/${id}/email`),
 };
 
 export const notificationsApi = {

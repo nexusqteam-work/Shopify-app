@@ -19,19 +19,16 @@ router.get('/me', authenticate, async (req, res) => {
   res.json({ success: true, merchant });
 });
 
-// POST /api/auth/token — Exchange shop+hmac for JWT (embedded app auth)
-router.post('/token', validate(tokenSchema), async (req, res, next) => {
+// POST /api/auth/token — Exchange an existing authenticated cookie session for a frontend JWT
+router.post('/token', authenticate, validate(tokenSchema), async (req, res, next) => {
   try {
     const { shopDomain } = req.body;
-    if (!shopDomain) return res.status(400).json({ success: false, error: 'shopDomain required' });
-
-    const merchant = await db.merchant.findUnique({
-      where: { shopDomain, isActive: true },
-    });
-    if (!merchant) return res.status(404).json({ success: false, error: 'Store not installed' });
+    if (shopDomain !== req.merchant.shopDomain) {
+      return res.status(403).json({ success: false, error: 'Shop domain does not match the active session' });
+    }
 
     const token = jwt.sign(
-      { merchantId: merchant.id, shopDomain },
+      { merchantId: req.merchant.id, shopDomain },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
