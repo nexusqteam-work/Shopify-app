@@ -75,7 +75,7 @@ export function FloatingAdvisor() {
           className="absolute inset-0 rounded-full animate-ping opacity-15"
           style={{ background: "var(--border)" }}
         />
-        {open ? <X className="size-5 relative text-[var(--text-secondary)]" /> : <img src={logoUrl} alt="StoreCoach Logo" className="size-7 object-contain relative" />}
+        {open ? <X className="size-5 relative text-[var(--text-secondary)]" /> : <img src={logoUrl} alt="StoreCoach Logo" className="size-11 object-contain relative" />}
       </button>
     </div>
   );
