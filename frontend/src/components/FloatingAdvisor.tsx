@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Sparkles, X } from "lucide-react";
 import { useState } from "react";
+import logoUrl from "../assets/Logo.png";
 
 export function FloatingAdvisor() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -20,8 +21,8 @@ export function FloatingAdvisor() {
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="size-9 rounded-xl gradient-emerald flex items-center justify-center glow-emerald">
-                <Sparkles className="size-4 text-white" />
+              <div className="size-9 rounded-xl bg-white flex items-center justify-center border overflow-hidden shrink-0" style={{ borderColor: "var(--border)" }}>
+                <img src={logoUrl} alt="AI Store Coach" className="size-7 object-contain" />
               </div>
               <div>
                 <div className="display text-[14px] font-bold tracking-tight leading-tight">
@@ -67,14 +68,14 @@ export function FloatingAdvisor() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Open AI Advisor"
-        className="relative size-14 rounded-full gradient-emerald glow-emerald flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition"
-        style={{ boxShadow: "0 12px 32px -8px color-mix(in oklab, var(--emerald-brand) 60%, transparent)" }}
+        className="relative size-14 rounded-full bg-white border flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition"
+        style={{ borderColor: "var(--border)", boxShadow: "0 8px 24px rgba(13,19,32,0.12)" }}
       >
         <span
-          className="absolute inset-0 rounded-full animate-ping opacity-30"
-          style={{ background: "var(--emerald-brand)" }}
+          className="absolute inset-0 rounded-full animate-ping opacity-15"
+          style={{ background: "var(--border)" }}
         />
-        {open ? <X className="size-5 relative" /> : <Sparkles className="size-6 relative" />}
+        {open ? <X className="size-5 relative text-[var(--text-secondary)]" /> : <img src={logoUrl} alt="StoreCoach Logo" className="size-7 object-contain relative" />}
       </button>
     </div>
   );

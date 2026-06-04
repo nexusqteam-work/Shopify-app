@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Send, Paperclip } from "lucide-react";
+import logoUrl from "../assets/Logo.png";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatApi } from "@/lib/api";
 import { useMerchant } from "@/hooks/useMerchant";
@@ -107,8 +108,8 @@ function AdvisorPage() {
           {messages.map((m: any, i: number) => (
             <div key={m._id || i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""} animate-fade-up`}>
               {m.role === "ai" && (
-                <div className="size-8 rounded-full gradient-emerald flex items-center justify-center shrink-0 glow-emerald">
-                  <span className="text-white text-[14px] font-bold">◈</span>
+                <div className="size-8 rounded-full bg-white flex items-center justify-center shrink-0 border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+                  <img src={logoUrl} alt="AI Store Coach" className="size-6 object-contain" />
                 </div>
               )}
               <div className={`max-w-[78%] ${m.role === "user" ? "items-end" : ""} flex flex-col`}>
@@ -138,8 +139,8 @@ function AdvisorPage() {
 
           {typing && (
             <div className="flex gap-3 animate-fade-up">
-              <div className="size-8 rounded-full gradient-emerald flex items-center justify-center shrink-0">
-                <span className="text-white text-[14px] font-bold">◈</span>
+              <div className="size-8 rounded-full bg-white flex items-center justify-center shrink-0 border overflow-hidden" style={{ borderColor: "var(--border)" }}>
+                <img src={logoUrl} alt="AI Store Coach" className="size-6 object-contain" />
               </div>
               <div
                 className="px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1.5"
