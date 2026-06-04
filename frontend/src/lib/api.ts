@@ -15,7 +15,7 @@ api.interceptors.response.use(
   (err: any) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('sc_token');
-      window.location.href = '/login';
+      window.location.href = `/connect${window.location.search}`;
     }
     return Promise.reject(err.response?.data || err);
   }
@@ -23,6 +23,7 @@ api.interceptors.response.use(
 
 export const authApi = {
   getMe: () => api.get('/api/auth/me'),
+  exchangeShopToken: (shopDomain: string) => api.post('/api/auth/token', { shopDomain }),
   logout: () => api.post('/api/auth/logout'),
 };
 

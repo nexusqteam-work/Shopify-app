@@ -127,7 +127,7 @@ function AppLayout() {
 
   if (!isAuthenticated && !isPublicRoute) {
     // Render nothing while redirect happens, or we can just redirect
-    window.location.href = '/connect';
+    window.location.href = `/connect${window.location.search}`;
     return null;
   }
 

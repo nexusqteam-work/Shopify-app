@@ -43,7 +43,16 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false, // Disabled for Shopify iframe
   crossOriginEmbedderPolicy: false,
+  xFrameOptions: false,
 }));
+
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    'frame-ancestors https://admin.shopify.com https://*.myshopify.com;'
+  );
+  next();
+});
 
 // ── CORS ─────────────────────────────────────────────
 app.use(cors({
@@ -87,7 +96,15 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('StoreCoach API is running');
+  const frontendUrl = new URL(process.env.FRONTEND_URL);
+
+  for (const [key, value] of Object.entries(req.query)) {
+    if (typeof value === 'string') {
+      frontendUrl.searchParams.set(key, value);
+    }
+  }
+
+  res.redirect(frontendUrl.toString());
 });
 
 // ── API Routes ────────────────────────────────────────

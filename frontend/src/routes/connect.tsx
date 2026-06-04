@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { API_URL } from '../config/env';
+import { authApi } from '../lib/api';
 import logoUrl from '../assets/Logo.png';
 
 export const Route = createFileRoute('/connect')({
@@ -11,6 +12,42 @@ function Connect() {
   const [shopDomain, setShopDomain] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shop = params.get('shop')?.trim().toLowerCase();
+    const installError = params.get('error');
+
+    if (installError === 'install_failed') {
+      setError('Shopify installation failed. Please try connecting the store again.');
+      return;
+    }
+
+    if (!shop || !shop.endsWith('.myshopify.com') || localStorage.getItem('sc_token')) {
+      return;
+    }
+
+    setShopDomain(shop);
+    setIsLoading(true);
+    setError('');
+
+    authApi.exchangeShopToken(shop)
+      .then((data: any) => {
+        if (!data?.success || !data?.token) {
+          throw new Error('No token returned');
+        }
+
+        localStorage.setItem('sc_token', data.token);
+        window.location.href = `/${window.location.search}`;
+      })
+      .catch((err: any) => {
+        console.error('Embedded Shopify login failed:', err);
+        setError('We could not finish the Shopify app login automatically. You can reconnect the store below.');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +78,9 @@ function Connect() {
           </div>
           <h1 className="text-2xl font-bold mb-2">Connect your Shopify store</h1>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Enter your store domain to get started with StoreCoach.
+            {isLoading
+              ? 'We are finalizing your Shopify connection.'
+              : 'Enter your store domain to get started with StoreCoach.'}
           </p>
         </div>
 

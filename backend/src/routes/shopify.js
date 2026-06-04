@@ -26,7 +26,12 @@ router.get('/install', (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid shop domain' });
   }
   const state = crypto.randomBytes(16).toString('hex');
-  res.cookie('shopify_state', state, { httpOnly: true, secure: true, maxAge: 300000 });
+  res.cookie('shopify_state', state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 300000,
+  });
   const installUrl = getInstallUrl(shop, state);
   res.redirect(installUrl);
 });
@@ -41,6 +46,8 @@ router.get('/callback', async (req, res) => {
     if (!storedState || storedState !== state) {
       return res.status(403).json({ success: false, error: 'Invalid state parameter' });
     }
+
+    res.clearCookie('shopify_state');
 
     // Verify HMAC from Shopify
     if (!verifyHmac(req.query)) {
@@ -103,12 +110,26 @@ router.get('/callback', async (req, res) => {
       sameSite: 'none',
     });
 
-    // Redirect to frontend dashboard
-    res.redirect(`${process.env.FRONTEND_URL}?token=${token}&shop=${shop}`);
+    const callbackUrl = new URL('/auth/callback', process.env.FRONTEND_URL);
+    callbackUrl.searchParams.set('token', token);
+    callbackUrl.searchParams.set('shop', shop);
+
+    if (typeof req.query.host === 'string') {
+      callbackUrl.searchParams.set('host', req.query.host);
+    }
+
+    res.redirect(callbackUrl.toString());
 
   } catch (err) {
     logger.error('OAuth callback failed:', err);
-    res.redirect(`${process.env.FRONTEND_URL}?error=install_failed`);
+    const errorUrl = new URL('/connect', process.env.FRONTEND_URL);
+    errorUrl.searchParams.set('error', 'install_failed');
+
+    if (typeof req.query.shop === 'string') {
+      errorUrl.searchParams.set('shop', req.query.shop);
+    }
+
+    res.redirect(errorUrl.toString());
   }
 });
 
