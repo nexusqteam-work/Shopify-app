@@ -38,7 +38,7 @@ function AdvisorPage() {
   const { merchant } = useMerchant();
   const queryClient = useQueryClient();
   const sessionId = "default";
-  
+
   const { data: historyRes, isPending, isError } = useQuery({
     queryKey: ["chat-history", sessionId],
     queryFn: () => chatApi.getHistory(sessionId),
@@ -119,9 +119,8 @@ function AdvisorPage() {
                   </div>
                 )}
                 <div
-                  className={`text-[13.5px] leading-relaxed whitespace-pre-line px-4 py-3 rounded-2xl ${
-                    m.role === "user" ? "text-white rounded-br-sm" : "rounded-tl-sm"
-                  }`}
+                  className={`text-[13.5px] leading-relaxed whitespace-pre-line px-4 py-3 rounded-2xl ${m.role === "user" ? "text-white rounded-br-sm" : "rounded-tl-sm"
+                    }`}
                   style={
                     m.role === "user"
                       ? { background: "var(--emerald-brand)" }
@@ -204,9 +203,6 @@ function AdvisorPage() {
               <Send className="size-4" />
             </button>
           </form>
-          <div className="text-[10.5px] mono mt-2 text-center" style={{ color: "var(--text-muted)" }}>
-            Press Enter to send · Replies are based on your live store data
-          </div>
         </div>
       </div>
     </div>
