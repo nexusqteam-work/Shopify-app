@@ -32,6 +32,7 @@ import visualAuditRoutes from './routes/visualAudit.js';
 
 // Jobs scheduler
 import { startScheduler } from './jobs/scheduler.js';
+import { db } from './utils/db.js';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -142,6 +143,30 @@ process.on('exit', (code) => {
 
 // ── Start Server ──────────────────────────────────────
 console.log("🚀 BEFORE LISTEN");
+
+// Clean up any stuck RUNNING audits on startup
+db.audit.updateMany({
+  where: { status: 'RUNNING' },
+  data: { status: 'FAILED' }
+}).then(res => {
+  if (res.count > 0) {
+    logger.info(`Cleaned up ${res.count} stuck RUNNING audits on startup`);
+  }
+}).catch(err => {
+  logger.error('Failed to clean up stuck audits on startup:', err);
+});
+
+db.visualAudit.updateMany({
+  where: { status: 'RUNNING' },
+  data: { status: 'FAILED' }
+}).then(res => {
+  if (res.count > 0) {
+    logger.info(`Cleaned up ${res.count} stuck RUNNING visual audits on startup`);
+  }
+}).catch(err => {
+  logger.error('Failed to clean up stuck visual audits on startup:', err);
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -15,7 +15,15 @@ router.post('/run', auditLimiter, async (req, res, next) => {
       where: { merchantId: req.merchant.id, status: 'RUNNING' },
     });
     if (running) {
-      return res.status(409).json({ success: false, error: 'Audit already in progress', auditId: running.id });
+      const isStale = Date.now() - new Date(running.startedAt || running.createdAt).getTime() > 10 * 60 * 1000;
+      if (isStale) {
+        await db.audit.update({
+          where: { id: running.id },
+          data: { status: 'FAILED' },
+        });
+      } else {
+        return res.status(409).json({ success: false, error: 'Audit already in progress', auditId: running.id });
+      }
     }
 
     const audit = await db.audit.create({

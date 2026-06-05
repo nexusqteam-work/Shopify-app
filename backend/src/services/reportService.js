@@ -70,16 +70,17 @@ export async function generateWeeklyReport(merchantId) {
     update: { data: reportData, aiSummary: reportData.aiSummary },
   });
 
-  // Send email report
-  try {
-    await sendWeeklyReportEmail(merchant, reportData);
-    await db.report.update({
-      where: { id: report.id },
-      data:  { emailSentAt: new Date() },
+  // Send email report in background (non-blocking)
+  sendWeeklyReportEmail(merchant, reportData)
+    .then(async () => {
+      await db.report.update({
+        where: { id: report.id },
+        data:  { emailSentAt: new Date() },
+      }).catch(() => {});
+    })
+    .catch((err) => {
+      logger.error(`Failed to send weekly email to ${merchant.email}:`, err);
     });
-  } catch (err) {
-    logger.error(`Failed to send weekly email to ${merchant.email}:`, err);
-  }
 
   logger.info(`Weekly report generated for ${merchant.shopDomain}`);
   return report;

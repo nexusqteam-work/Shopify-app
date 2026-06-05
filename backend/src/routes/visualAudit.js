@@ -81,11 +81,19 @@ router.post('/run', auditLimiter, requireVisualAccess, async (req, res, next) =>
       where: { merchantId: req.merchant.id, status: 'RUNNING' },
     });
     if (running) {
-      return res.status(409).json({
-        success:       false,
-        error:         'Visual audit already in progress',
-        visualAuditId: running.id,
-      });
+      const isStale = Date.now() - new Date(running.startedAt || running.createdAt).getTime() > 10 * 60 * 1000;
+      if (isStale) {
+        await db.visualAudit.update({
+          where: { id: running.id },
+          data: { status: 'FAILED' },
+        });
+      } else {
+        return res.status(409).json({
+          success:       false,
+          error:         'Visual audit already in progress',
+          visualAuditId: running.id,
+        });
+      }
     }
 
     // Create audit record

@@ -34,7 +34,7 @@ export const tokenSchema = z.object({
 // ── Chat schemas ─────────────────────────────────────
 export const chatMessageSchema = z.object({
   message:   z.string().min(1, 'Message cannot be empty').max(2000, 'Message too long'),
-  sessionId: z.string().uuid('Invalid session ID').optional(),
+  sessionId: z.string().min(1, 'Invalid session ID').optional(),
 });
 
 // ── Issue schemas ─────────────────────────────────────
