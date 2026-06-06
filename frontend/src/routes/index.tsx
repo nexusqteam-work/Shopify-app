@@ -135,6 +135,17 @@ function Dashboard() {
   const metrics = useMemo(() => (metricsData as any)?.metrics || [], [metricsData]);
   const weeklyRevenue = useMemo(() => buildWeeklyRevenue(metrics), [metrics]);
   const maxRev = useMemo(() => Math.max(...weeklyRevenue.map((point) => point.value), 1), [weeklyRevenue]);
+  const peakWeekIndex = useMemo(() => {
+    let maxIdx = -1;
+    let maxVal = -1;
+    weeklyRevenue.forEach((point, idx) => {
+      if (point.value > maxVal) {
+        maxVal = point.value;
+        maxIdx = idx;
+      }
+    });
+    return maxIdx;
+  }, [weeklyRevenue]);
 
   if (isLoading) {
     return (
@@ -364,32 +375,67 @@ function Dashboard() {
                 Last 30 Days
               </span>
             </div>
-            <div className="h-56 flex items-end gap-6 px-2 relative mt-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="absolute left-0 right-0 border-t border-dashed" style={{ borderColor: "var(--border)", bottom: `${(i / 3) * 100}%` }} />
-              ))}
-              {weeklyRevenue.map((point, i) => {
-                const height = (point.value / maxRev) * 100;
-                return (
-                  <div key={`${point.week}-${i}`} className="flex-1 flex flex-col items-center gap-2 z-10">
-                    <div className="mono text-[11px] font-bold">{formatINR(point.value)}</div>
-                    <div className="w-full max-w-[80px] flex flex-col justify-end" style={{ height: 160 }}>
-                      <div
-                        className="w-full rounded-t-xl animate-fade-up"
-                        style={{
-                          height: `${height}%`,
-                          background: "linear-gradient(180deg, oklch(0.78 0.16 165) 0%, oklch(0.68 0.18 170) 100%)",
-                          animationDelay: `${300 + i * 80}ms`,
-                        }}
-                      />
+            {weeklyRevenue.length > 0 ? (
+              <div className="h-56 relative mt-4 pl-14 select-none">
+                {/* Grid Lines & Y-Axis */}
+                {[0, 1, 2, 3].map((i) => {
+                  const value = (maxRev * i) / 3;
+                  return (
+                    <div
+                      key={i}
+                      className="absolute left-0 right-0 flex items-center"
+                      style={{ bottom: `${(i / 3) * 100}%` }}
+                    >
+                      <span className="w-12 pr-2 text-right text-[10px] mono text-[var(--text-secondary)] select-none">
+                        {formatINR(value)}
+                      </span>
+                      <div className="flex-1 border-t border-dashed" style={{ borderColor: "var(--border)" }} />
                     </div>
-                    <div className="text-[11px] mono" style={{ color: "var(--text-secondary)" }}>{point.week}</div>
-                  </div>
-                );
-              })}
-            </div>
-            {weeklyRevenue.length === 0 && (
-              <div className="mt-4 text-[13px] text-center" style={{ color: "var(--text-secondary)" }}>
+                  );
+                })}
+
+                {/* Bars */}
+                <div className="absolute inset-y-0 left-12 right-0 flex items-end gap-6 px-2">
+                  {weeklyRevenue.map((point, i) => {
+                    const height = (point.value / maxRev) * 100;
+                    const isPeak = i === peakWeekIndex;
+                    return (
+                      <div key={`${point.week}-${i}`} className="group relative flex-1 flex flex-col items-center gap-2 z-10">
+                        {/* Tooltip */}
+                        <div className="absolute bottom-[calc(100%-4px)] mb-2 scale-95 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bg-slate-900 text-white text-[11.5px] rounded-xl px-3.5 py-2.5 shadow-xl border border-slate-800 z-50 flex flex-col items-start gap-1 whitespace-nowrap">
+                          <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{point.week}</div>
+                          <div className="font-bold text-white text-[13px]">{formatINRFull(point.value)}</div>
+                          <div className="text-[10px] text-[var(--emerald-brand)] font-semibold flex items-center gap-1">
+                            <Sparkles className="size-2.5" /> Est. Recovery Potential
+                          </div>
+                        </div>
+
+                        {/* Bar container */}
+                        <div className="w-full max-w-[80px] flex flex-col justify-end" style={{ height: 160 }}>
+                          {isPeak && (
+                            <span className="self-center text-[9px] font-extrabold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full uppercase tracking-wider mb-1 animate-pulse shrink-0">
+                              Peak
+                            </span>
+                          )}
+                          <div
+                            className="w-full rounded-t-xl transition-all duration-300 group-hover:scale-y-[1.02] cursor-pointer"
+                            style={{
+                              height: `${height}%`,
+                              background: isPeak 
+                                ? "linear-gradient(180deg, var(--emerald-brand) 0%, oklch(0.42 0.12 165) 100%)"
+                                : "linear-gradient(180deg, color-mix(in oklab, var(--emerald-brand) 85%, white) 0%, var(--emerald-brand) 100%)",
+                              boxShadow: isPeak ? "0 4px 12px -2px color-mix(in oklab, var(--emerald-brand) 30%, transparent)" : undefined,
+                            }}
+                          />
+                        </div>
+                        <div className="text-[11px] mono font-medium" style={{ color: "var(--text-secondary)" }}>{point.week}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-8 py-12 text-[13px] text-center rounded-xl border border-dashed" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
                 No metric history yet. Sync metrics from Shopify first.
               </div>
             )}
