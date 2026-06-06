@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════
---  Initial Migration — StoreCoach Database
+--  Initial Migration — Flovix Database
 --  Auto-generated from Prisma schema
 -- ═══════════════════════════════════════════════════
 

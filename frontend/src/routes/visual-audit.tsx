@@ -9,11 +9,15 @@ import { Eye, Lock, Layout, AlertCircle, RefreshCw, AlertTriangle, Code, CheckCi
 import { SkeletonList } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/visual-audit")({
-  head: () => ({ meta: [{ title: "Visual Analysis - StoreCoach" }] }),
+  head: () => ({
+    meta: [
+      { title: "Visual Analysis - Flovix" },
+    ],
+  }),
   component: VisualAuditPage,
 });
 
-function formatINRFull(n: number): string {
+  function formatINRFull(n: number): string {
   return `₹${n.toLocaleString("en-IN")}`;
 }
 
@@ -38,7 +42,7 @@ function VisualAuditPage() {
   });
 
   const latestStatus = latestRes?.audit?.status;
-  
+
   useEffect(() => {
     if (latestStatus === 'RUNNING' && latestRes?.audit?.id) {
       setActiveScanId(latestRes.audit.id);
@@ -61,7 +65,7 @@ function VisualAuditPage() {
       setPollError(false);
       setPollInterval(POLL_INTERVAL_DEFAULT);
     }
-    
+
     if (statusRes?.status === 'COMPLETED') {
       setActiveScanId(null);
       queryClient.invalidateQueries({ queryKey: ["visual-audit-latest"] });
@@ -136,8 +140,8 @@ function VisualAuditPage() {
             <div className="flex justify-between"><span>Pro</span><span className="font-bold">₹2,999/mo</span></div>
             <div className="flex justify-between"><span>Agent</span><span className="font-bold">₹29,999/mo</span></div>
           </div>
-          <button 
-            onClick={() => upgradeMutation.mutate()} 
+          <button
+            onClick={() => upgradeMutation.mutate()}
             disabled={upgradeMutation.isPending}
             className="w-full gradient-emerald text-white font-semibold py-3 rounded-xl glow-emerald transition disabled:opacity-50"
           >
@@ -172,11 +176,11 @@ function VisualAuditPage() {
           </div>
           <h2 className="display text-center text-[20px] font-bold mb-1">{message}</h2>
           {currentUrl && <p className="text-center text-[12.5px] mono truncate mb-6" style={{ color: "var(--text-muted)" }}>{currentUrl}</p>}
-          
+
           <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: "var(--border)" }}>
             <div className="h-full transition-all duration-500 ease-out" style={{ width: `${progress}%`, background: "var(--emerald-brand)" }} />
           </div>
-          
+
           <div className="flex justify-between items-center text-[12px] mono font-bold mb-6" style={{ color: "var(--emerald-brand)" }}>
             <span>{Math.round(progress)}% Complete</span>
             {progress === 100 && <span>Finalizing...</span>}
@@ -191,7 +195,7 @@ function VisualAuditPage() {
             ))}
           </div>
 
-          <button 
+          <button
             onClick={() => setActiveScanId(null)}
             className="w-full text-[13px] font-semibold py-2.5 rounded-xl border hover:bg-[var(--muted)] transition"
             style={{ borderColor: "var(--border)" }}
@@ -221,7 +225,7 @@ function VisualAuditPage() {
             {merchant?.plan === 'PRO' && "6 pages scanned · 30 checks · AI code fixes"}
             {merchant?.plan === 'AGENCY' && "All pages · 50 checks · Auto-fix enabled"}
           </p>
-          <button 
+          <button
             onClick={() => runMutation.mutate()}
             disabled={runMutation.isPending}
             className="gradient-emerald text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 mx-auto glow-emerald transition hover:opacity-95 disabled:opacity-50"
@@ -241,7 +245,7 @@ function VisualAuditPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1440px] 2xl:max-w-[1720px] px-4 sm:px-6 lg:px-10 xl:px-14 py-6 lg:py-8 xl:py-10 space-y-8">
-      
+
       {/* SECTION A - Visual Score Card */}
       <div className="surface-card p-6 lg:p-8 animate-fade-up">
         <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
@@ -251,7 +255,7 @@ function VisualAuditPage() {
             <div className="text-[12.5px] mt-1" style={{ color: "var(--text-muted)" }}>
               {audit?.pagesScanned || 0} pages scanned · {issues.length} issues found
             </div>
-            <button 
+            <button
               onClick={() => runMutation.mutate()}
               disabled={runMutation.isPending}
               className="mt-6 text-[12.5px] font-semibold px-4 py-2 border rounded-lg hover:bg-[var(--muted)] flex items-center gap-2 transition"
@@ -304,11 +308,10 @@ function VisualAuditPage() {
                     <tr key={fix.id}>
                       <td className="px-4 py-3 font-medium">{fix.title}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10.5px] mono font-bold uppercase ${
-                          fix.status === 'APPLIED' ? 'bg-green-100 text-green-700' :
+                        <span className={`px-2 py-0.5 rounded-full text-[10.5px] mono font-bold uppercase ${fix.status === 'APPLIED' ? 'bg-green-100 text-green-700' :
                           fix.status === 'GENERATED' ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
+                            'bg-gray-100 text-gray-600'
+                          }`}>
                           {fix.status}
                         </span>
                       </td>
@@ -326,9 +329,9 @@ function VisualAuditPage() {
               </table>
             </div>
             <div className="p-4 border-t" style={{ borderColor: "var(--border)", background: "color-mix(in oklab, var(--muted) 40%, transparent)" }}>
-              <button 
+              <button
                 onClick={() => {
-                  if(confirm("This will remove all StoreCoach CSS changes from your theme. Are you sure?")) {
+                  if (confirm("This will remove all Flovix CSS changes from your theme. Are you sure?")) {
                     revertAllMutation.mutate();
                   }
                 }}
@@ -348,7 +351,7 @@ function VisualAuditPage() {
 // Subcomponents for Issue Card logic
 
 function Sparkles({ className }: { className?: string }) {
-  return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+  return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg>
 }
 
 function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
@@ -416,7 +419,7 @@ function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
           <h4 className="display text-[15px] font-bold tracking-tight text-foreground truncate">{issue.title}</h4>
           <p className="text-[13px] mt-1 line-clamp-2 leading-relaxed" style={{ color: "var(--text-secondary)" }}>{issue.description}</p>
         </div>
-        
+
         <div className="shrink-0 flex items-center gap-4">
           <div className="text-right">
             <div className="label-eyebrow">Impact</div>
@@ -439,7 +442,7 @@ function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
             <ul className="space-y-2 mb-4">
               {issue.fixSteps?.map((step: string, i: number) => (
                 <li key={i} className="flex gap-2 text-[13px]">
-                  <span className="shrink-0 size-5 rounded-full mono text-[10px] font-bold flex items-center justify-center bg-white border" style={{ borderColor: "var(--border)" }}>{i+1}</span>
+                  <span className="shrink-0 size-5 rounded-full mono text-[10px] font-bold flex items-center justify-center bg-white border" style={{ borderColor: "var(--border)" }}>{i + 1}</span>
                   <span className="pt-0.5">{step}</span>
                 </li>
               ))}
@@ -450,7 +453,7 @@ function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
             <div className="mt-6 border-t pt-5" style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center gap-3 mb-3">
                 {!code ? (
-                  <button 
+                  <button
                     onClick={() => genMutation.mutate()}
                     disabled={genMutation.isPending}
                     className="text-[12.5px] font-semibold px-4 py-2 rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition flex items-center gap-2"
@@ -463,9 +466,9 @@ function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
                     <CheckCircle className="size-4" /> Code Generated
                   </div>
                 )}
-                
+
                 {autoFix && code && fixStatus !== 'APPLIED' && (
-                  <button 
+                  <button
                     onClick={() => applyMutation.mutate()}
                     disabled={applyMutation.isPending}
                     className="text-[12.5px] font-semibold px-4 py-2 rounded-lg gradient-emerald text-white glow-emerald hover:opacity-95 transition flex items-center gap-2"
@@ -474,13 +477,13 @@ function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
                     {applyMutation.isPending ? "Applying to theme..." : "Auto-Apply to Store"}
                   </button>
                 )}
-                
+
                 {fixStatus === 'APPLIED' && (
                   <>
                     <div className="text-[13px] font-medium text-emerald-600 flex items-center gap-1.5 px-3">
                       ✅ Applied to your store
                     </div>
-                    <button 
+                    <button
                       onClick={() => revertMutation.mutate()}
                       disabled={revertMutation.isPending}
                       className="text-[12px] font-medium px-3 py-1.5 rounded-lg border hover:bg-gray-50 transition"
@@ -506,7 +509,7 @@ function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
 
               {code && (
                 <div className="mt-4 bg-[#1e293b] rounded-xl overflow-hidden relative group">
-                  <button 
+                  <button
                     onClick={() => navigator.clipboard.writeText(code)}
                     className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition opacity-0 group-hover:opacity-100"
                     title="Copy Code"
@@ -518,11 +521,10 @@ function IssueCard({ issue, codeGen, autoFix, delay, queryClient }: any) {
                   </pre>
                   <div className="px-4 py-2.5 bg-black/40 flex items-center gap-3 border-t border-white/10 text-white/70 text-[11px] mono">
                     {issue.riskLevel && (
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        issue.riskLevel === 'LOW' ? 'bg-green-500/20 text-green-400' : 
-                        issue.riskLevel === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' : 
-                        'bg-red-500/20 text-red-400'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${issue.riskLevel === 'LOW' ? 'bg-green-500/20 text-green-400' :
+                        issue.riskLevel === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-red-500/20 text-red-400'
+                        }`}>
                         {issue.riskLevel} RISK
                       </span>
                     )}
@@ -547,7 +549,7 @@ function RevertButton({ fixId, queryClient }: any) {
   });
 
   return (
-    <button 
+    <button
       onClick={() => mutation.mutate()}
       disabled={mutation.isPending}
       className="text-[12px] font-medium px-3 py-1.5 rounded-lg border hover:bg-[var(--muted)] transition"

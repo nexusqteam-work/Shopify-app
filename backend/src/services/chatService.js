@@ -59,8 +59,8 @@ async function buildSystemPrompt(merchant) {
   });
 
   const totalRevenue = metrics.reduce((s, m) => s + m.revenue, 0);
-  const totalOrders  = metrics.reduce((s, m) => s + m.orders, 0);
-  const avgCVR       = metrics.length > 0
+  const totalOrders = metrics.reduce((s, m) => s + m.orders, 0);
+  const avgCVR = metrics.length > 0
     ? (metrics.reduce((s, m) => s + m.conversionRate, 0) / metrics.length).toFixed(2)
     : 'unknown';
 
@@ -68,7 +68,7 @@ async function buildSystemPrompt(merchant) {
     `${idx + 1}. [${i.priority}] ${i.title} — ₹${i.impact.toLocaleString('en-IN')}/month loss | ${i.effortMinutes} min fix`
   ).join('\n');
 
-  return `You are the AI Store Coach for "${merchant.shopName}" (${merchant.shopDomain}), a Shopify store. You are a world-class ecommerce consultant with deep Shopify expertise.
+  return `You are the AI Flovix for "${merchant.shopName}" (${merchant.shopDomain}), a Shopify store. You are a world-class ecommerce consultant with deep Shopify expertise.
 
 LIVE STORE DATA (last 30 days):
 - Revenue: ₹${totalRevenue.toLocaleString('en-IN')}
@@ -135,15 +135,15 @@ export async function sendChatMessage(merchant, sessionId, userMessage) {
     data: {
       merchantId: merchant.id,
       sessionId,
-      role:       'user',
-      content:    userMessage,
+      role: 'user',
+      content: userMessage,
     },
   });
 
   // Build message history for Claude
   const messages = history.map(m => ({
-    role:    m.role === 'assistant' ? 'model' : 'user',
-    parts:   [{ text: m.content }],
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
   }));
   messages.push({ role: 'user', parts: [{ text: userMessage }] });
 
@@ -159,8 +159,8 @@ export async function sendChatMessage(merchant, sessionId, userMessage) {
     }
 
     const response = await ai.models.generateContent({
-      model:      'gemini-3.5-flash',
-      contents:   messages,
+      model: 'gemini-3.5-flash',
+      contents: messages,
       config: {
         maxOutputTokens: 1000,
         systemInstruction: systemPrompt,
@@ -183,8 +183,8 @@ export async function sendChatMessage(merchant, sessionId, userMessage) {
     data: {
       merchantId: merchant.id,
       sessionId,
-      role:       'assistant',
-      content:    assistantMessage,
+      role: 'assistant',
+      content: assistantMessage,
       tokensUsed,
     },
   });
@@ -195,26 +195,26 @@ export async function sendChatMessage(merchant, sessionId, userMessage) {
 // ── Get chat history for a session ──────────────────
 export async function getChatHistory(merchantId, sessionId) {
   return db.chatMessage.findMany({
-    where:   { merchantId, sessionId },
+    where: { merchantId, sessionId },
     orderBy: { createdAt: 'asc' },
-    select:  { role: true, content: true, createdAt: true },
+    select: { role: true, content: true, createdAt: true },
   });
 }
 
 // ── List all chat sessions for a merchant ────────────
 export async function getChatSessions(merchantId) {
   const sessions = await db.chatMessage.groupBy({
-    by:      ['sessionId'],
-    where:   { merchantId },
-    _max:    { createdAt: true },
-    _count:  { id: true },
+    by: ['sessionId'],
+    where: { merchantId },
+    _max: { createdAt: true },
+    _count: { id: true },
     orderBy: { _max: { createdAt: 'desc' } },
-    take:    20,
+    take: 20,
   });
 
   return sessions.map(s => ({
-    sessionId:    s.sessionId,
+    sessionId: s.sessionId,
     messageCount: s._count.id,
-    lastMessage:  s._max.createdAt,
+    lastMessage: s._max.createdAt,
   }));
 }

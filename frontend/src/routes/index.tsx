@@ -22,7 +22,7 @@ import { useMerchant } from "@/hooks/useMerchant";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard - StoreCoach" },
+      { title: "Dashboard - Flovix" },
       { name: "description", content: "Your store's revenue health, audit scores and top issues at a glance." },
     ],
   }),
@@ -167,7 +167,7 @@ function Dashboard() {
 
   const overallScore = audit?.overallScore || 0;
   const unreadNotifications = 0; // Will be handled by sidebar globally or context
-  
+
   const metrics = (metricsData as any)?.metrics || [];
   const sparklines = {
     revenue: metrics.map((m: any) => m.revenue),
@@ -178,17 +178,17 @@ function Dashboard() {
 
   const displayMetrics = (metricsData as any)?.summary
     ? {
-        revenue: { value: (metricsData as any).summary.totalRevenue ?? 0, change: Number((metricsData as any).summary.revenueChange) || 0 },
-        orders: { value: (metricsData as any).summary.totalOrders ?? 0, change: 0 },
-        visitors: { value: (metricsData as any).summary.totalVisitors ?? 0, change: 0 },
-        conversion: { value: Number((((metricsData as any).summary.avgConversionRate ?? 0) * 100).toFixed(1)), change: 0 },
-      }
+      revenue: { value: (metricsData as any).summary.totalRevenue ?? 0, change: Number((metricsData as any).summary.revenueChange) || 0 },
+      orders: { value: (metricsData as any).summary.totalOrders ?? 0, change: 0 },
+      visitors: { value: (metricsData as any).summary.totalVisitors ?? 0, change: 0 },
+      conversion: { value: Number((((metricsData as any).summary.avgConversionRate ?? 0) * 100).toFixed(1)), change: 0 },
+    }
     : {
-        revenue: { value: 0, change: 0 },
-        orders: { value: 0, change: 0 },
-        visitors: { value: 0, change: 0 },
-        conversion: { value: 0, change: 0 },
-      };
+      revenue: { value: 0, change: 0 },
+      orders: { value: 0, change: 0 },
+      visitors: { value: 0, change: 0 },
+      conversion: { value: 0, change: 0 },
+    };
 
   return (
     <div className="mx-auto w-full max-w-[1440px] 2xl:max-w-[1720px] px-4 sm:px-6 lg:px-10 xl:px-14 py-6 lg:py-8 xl:py-10">

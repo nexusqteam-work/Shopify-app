@@ -14,7 +14,7 @@ import { Eye, Lock } from "lucide-react";
 export const Route = createFileRoute("/audit")({
   head: () => ({
     meta: [
-      { title: "Store Audit - StoreCoach" },
+      { title: "Store Audit - Flovix" },
       { name: "description", content: "Run a deep AI scan across speed, SEO, apps, checkout, and mobile UX." },
     ],
   }),
@@ -46,7 +46,7 @@ function AuditPage() {
     queryFn: () => auditApi.getLatest(),
     enabled: !!merchant,
   });
-  
+
   const { data: latestVisualAuditRes } = useQuery({
     queryKey: ["visual-audit-latest"],
     queryFn: () => visualAuditApi.getLatest(),

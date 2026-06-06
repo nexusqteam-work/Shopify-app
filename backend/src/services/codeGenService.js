@@ -14,9 +14,9 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // Maps issue types to which theme files to fetch
 const ISSUE_FILE_MAP = {
   'CONVERSION': ['sections/main-product.liquid', 'snippets/product-form.liquid', 'assets/theme.css'],
-  'MOBILE':     ['assets/theme.css', 'assets/base.css', 'layout/theme.liquid'],
-  'SPEED':      ['layout/theme.liquid', 'assets/theme.js'],
-  'LAYOUT':     ['sections/main-product.liquid', 'assets/theme.css'],
+  'MOBILE': ['assets/theme.css', 'assets/base.css', 'layout/theme.liquid'],
+  'SPEED': ['layout/theme.liquid', 'assets/theme.js'],
+  'LAYOUT': ['sections/main-product.liquid', 'assets/theme.css'],
 };
 
 // ── Fetch active theme ID ─────────────────────────────
@@ -53,19 +53,19 @@ async function writeThemeAsset(client, themeId, assetKey, content) {
 export async function generateFixCode(issue, merchant) {
   logger.info(`Generating fix code for: ${issue.title}`);
 
-  const client  = createShopifyClient(merchant.shopDomain, merchant.accessToken);
+  const client = createShopifyClient(merchant.shopDomain, merchant.accessToken);
   const themeId = await getActiveThemeId(client);
 
   if (!themeId) {
     return {
       success: false,
-      error:   'Could not find active theme',
+      error: 'Could not find active theme',
     };
   }
 
   // Fetch relevant theme files for this issue type
   const relevantFiles = ISSUE_FILE_MAP[issue.category] || ['assets/theme.css'];
-  const themeCode     = {};
+  const themeCode = {};
 
   for (const fileKey of relevantFiles.slice(0, 2)) {
     const content = await fetchThemeAsset(client, themeId, fileKey);
@@ -96,13 +96,13 @@ ${themeCodeContext || 'Theme code not available — generate a general fix'}
 RULES:
 1. Generate ONLY the minimal code change needed
 2. CSS fixes go in a <style> block with a clear comment
-3. Never modify merchant's original files — output goes in storecoach-fixes.css
+3. Never modify merchant's original files — output goes in Flovixes.css
 4. Always use mobile-first CSS with proper media queries
 5. CSS must be scoped — never use * selector
 6. If a Liquid change is needed, show it as a comment with instructions
 7. Return JSON with this exact structure:
 {
-  "cssCode": "/* StoreCoach Fix: [issue title] */\\n.selector { property: value; }",
+  "cssCode": "/* Flovix Fix: [issue title] */\\n.selector { property: value; }",
   "liquidNote": "Optional instruction if Liquid template change is needed",
   "explanation": "One sentence explaining what this code does",
   "riskLevel": "LOW | MEDIUM | HIGH",
@@ -113,27 +113,27 @@ Return ONLY the JSON object. No other text.`;
 
   try {
     const response = await ai.models.generateContent({
-      model:      'gemini-3.1-pro',
-      contents:   prompt,
-      config:     { maxOutputTokens: 800 },
+      model: 'gemini-3.1-pro',
+      contents: prompt,
+      config: { maxOutputTokens: 800 },
     });
 
     const raw = response.text?.trim();
 
     // Parse JSON response
-    const clean   = raw.replace(/```json|```/g, '').trim();
+    const clean = raw.replace(/```json|```/g, '').trim();
     const fixData = JSON.parse(clean);
 
     logger.info(`Fix code generated for: ${issue.title} (risk: ${fixData.riskLevel})`);
 
     return {
-      success:    true,
+      success: true,
       themeId,
-      issueId:    issue.id,
-      cssCode:    fixData.cssCode,
+      issueId: issue.id,
+      cssCode: fixData.cssCode,
       liquidNote: fixData.liquidNote,
       explanation: fixData.explanation,
-      riskLevel:  fixData.riskLevel,
+      riskLevel: fixData.riskLevel,
       reversible: fixData.reversible,
       tokensUsed: response.usageMetadata?.totalTokenCount,
     };
@@ -142,7 +142,7 @@ Return ONLY the JSON object. No other text.`;
     logger.error(`Code generation failed for ${issue.title}: ${err.message}`);
     return {
       success: false,
-      error:   `Code generation failed: ${err.message}`,
+      error: `Code generation failed: ${err.message}`,
     };
   }
 }
@@ -160,12 +160,12 @@ export async function applyFixCode(fixData, merchant, db) {
   if (fixData.riskLevel === 'HIGH') {
     return {
       success: false,
-      error:   'HIGH risk fixes require manual review and cannot be auto-applied',
+      error: 'HIGH risk fixes require manual review and cannot be auto-applied',
     };
   }
 
   try {
-    const FIXES_FILE = 'assets/storecoach-fixes.css';
+    const FIXES_FILE = 'assets/Flovix-fixes.css';
 
     // Fetch existing fixes file (or start fresh)
     let existingContent = '';
@@ -173,27 +173,27 @@ export async function applyFixCode(fixData, merchant, db) {
       const existing = await fetchThemeAsset(client, fixData.themeId, FIXES_FILE);
       existingContent = existing || '';
     } catch (e) {
-      existingContent = '/* StoreCoach Automated Fixes */\n/* All changes are tracked and reversible */\n\n';
+      existingContent = '/* Flovix Automated Fixes */\n/* All changes are tracked and reversible */\n\n';
     }
 
     // Append new fix with timestamp and issue reference
-    const timestamp  = new Date().toISOString();
+    const timestamp = new Date().toISOString();
     const fixComment = `\n/* [${timestamp}] Fix ID: ${fixData.issueId} — ${fixData.explanation} */\n`;
     const newContent = existingContent + fixComment + fixData.cssCode + '\n';
 
     // Write to Shopify theme
     await writeThemeAsset(client, fixData.themeId, FIXES_FILE, newContent);
 
-    // Ensure storecoach-fixes.css is included in theme.liquid
+    // Ensure Flovix-fixes.css is included in theme.liquid
     await ensureFixesFileIncluded(client, fixData.themeId);
 
     logger.info(`Fix applied to theme: ${FIXES_FILE} for ${merchant.shopDomain}`);
 
     return {
-      success:    true,
-      appliedAt:  new Date(),
-      fixFile:    FIXES_FILE,
-      themeId:    fixData.themeId,
+      success: true,
+      appliedAt: new Date(),
+      fixFile: FIXES_FILE,
+      themeId: fixData.themeId,
       reversible: true,
     };
 
@@ -201,53 +201,53 @@ export async function applyFixCode(fixData, merchant, db) {
     logger.error(`Auto-apply failed: ${err.message}`);
     return {
       success: false,
-      error:   `Failed to apply fix: ${err.message}`,
+      error: `Failed to apply fix: ${err.message}`,
     };
   }
 }
 
-// ── Ensure storecoach-fixes.css is linked in theme ───
+// ── Ensure Flovix-fixes.css is linked in theme ───
 async function ensureFixesFileIncluded(client, themeId) {
   try {
     const themeLayout = await fetchThemeAsset(client, themeId, 'layout/theme.liquid');
     if (!themeLayout) return;
 
-    const linkTag = `{{ 'storecoach-fixes.css' | asset_url | stylesheet_tag }}`;
+    const linkTag = `{{ 'Flovix-fixes.css' | asset_url | stylesheet_tag }}`;
 
     // Already included — skip
-    if (themeLayout.includes('storecoach-fixes.css')) return;
+    if (themeLayout.includes('Flovix-fixes.css')) return;
 
     // Inject before </head>
     const updated = themeLayout.replace('</head>', `  ${linkTag}\n</head>`);
     await writeThemeAsset(client, themeId, 'layout/theme.liquid', updated);
 
-    logger.info('storecoach-fixes.css linked in theme.liquid');
+    logger.info('Flovix-fixes.css linked in theme.liquid');
   } catch (err) {
     logger.warn(`Could not inject CSS link in theme.liquid: ${err.message}`);
   }
 }
 
 // ─────────────────────────────────────────────────────
-//  REVERT: Remove a specific fix from storecoach-fixes.css
+//  REVERT: Remove a specific fix from Flovix-fixes.css
 // ─────────────────────────────────────────────────────
 export async function revertFixCode(issueId, merchant) {
   logger.info(`Reverting fix for issue: ${issueId}`);
 
-  const client  = createShopifyClient(merchant.shopDomain, merchant.accessToken);
+  const client = createShopifyClient(merchant.shopDomain, merchant.accessToken);
   const themeId = await getActiveThemeId(client);
   if (!themeId) return { success: false, error: 'Theme not found' };
 
   try {
-    const FIXES_FILE     = 'assets/storecoach-fixes.css';
+    const FIXES_FILE = 'assets/Flovix-fixes.css';
     const existingContent = await fetchThemeAsset(client, themeId, FIXES_FILE);
     if (!existingContent) return { success: true, message: 'No fixes file found' };
 
     // Remove the specific fix block using issue ID as marker
-    const fixPattern  = new RegExp(
+    const fixPattern = new RegExp(
       `\\/\\*[^*]*Fix ID: ${issueId}[^*]*\\*\\/\\n[^/]*(?=\\/\\*|$)`,
       'gs'
     );
-    const newContent  = existingContent.replace(fixPattern, '').trim();
+    const newContent = existingContent.replace(fixPattern, '').trim();
 
     await writeThemeAsset(client, themeId, FIXES_FILE, newContent + '\n');
 
@@ -261,12 +261,12 @@ export async function revertFixCode(issueId, merchant) {
 }
 
 // ─────────────────────────────────────────────────────
-//  REVERT ALL: Remove entire storecoach-fixes.css
+//  REVERT ALL: Remove entire Flovix-fixes.css
 // ─────────────────────────────────────────────────────
 export async function revertAllFixes(merchant) {
   logger.info(`Reverting ALL fixes for: ${merchant.shopDomain}`);
 
-  const client  = createShopifyClient(merchant.shopDomain, merchant.accessToken);
+  const client = createShopifyClient(merchant.shopDomain, merchant.accessToken);
   const themeId = await getActiveThemeId(client);
   if (!themeId) return { success: false, error: 'Theme not found' };
 
@@ -274,15 +274,15 @@ export async function revertAllFixes(merchant) {
     // Reset fixes file to empty
     await writeThemeAsset(
       client, themeId,
-      'assets/storecoach-fixes.css',
-      '/* StoreCoach Fixes — All reverted */\n'
+      'assets/Flovix-fixes.css',
+      '/* Flovix Fixes — All reverted */\n'
     );
 
     // Remove link from theme.liquid
     const themeLayout = await fetchThemeAsset(client, themeId, 'layout/theme.liquid');
-    if (themeLayout?.includes('storecoach-fixes.css')) {
+    if (themeLayout?.includes('Flovix-fixes.css')) {
       const cleaned = themeLayout.replace(
-        /\s*\{\{ 'storecoach-fixes\.css'[^\n]+\n/g, ''
+        /\s*\{\{ 'Flovix-fixes\.css'[^\n]+\n/g, ''
       );
       await writeThemeAsset(client, themeId, 'layout/theme.liquid', cleaned);
     }

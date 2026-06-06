@@ -11,7 +11,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 export const Route = createFileRoute("/reports")({
   head: () => ({
     meta: [
-      { title: "Reports - StoreCoach" },
+      { title: "Reports - Flovix" },
       { name: "description", content: "Weekly performance reports and AI-generated summaries of your store." },
     ],
   }),
@@ -69,7 +69,7 @@ function buildWeeklyRevenue(metrics: any[]) {
 function ReportsPage() {
   const { merchant } = useMerchant();
   const queryClient = useQueryClient();
-  
+
   const { data: reportsRes, isPending: loadingReports, isError: errorReports, refetch: refetchReports } = useQuery({
     queryKey: ["reports"],
     queryFn: () => reportsApi.getAll(),
@@ -81,19 +81,19 @@ function ReportsPage() {
     queryFn: () => reportsApi.getById(latestReportId!),
     enabled: !!latestReportId,
   });
-  
+
   const { data: metricsRes, isPending: loadingMetrics, isError: errorMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ["metrics-daily", 35],
     queryFn: () => metricsApi.getDaily(35),
     enabled: !!merchant,
   });
-  
+
   const { data: issueSummaryRes, isPending: loadingIssues, isError: errorIssues, refetch: refetchIssues } = useQuery({
     queryKey: ["issue-summary"],
     queryFn: () => issuesApi.summary(),
     enabled: !!merchant,
   });
-  
+
   const { data: latestAuditRes, isPending: loadingAudit, isError: errorAudit, refetch: refetchAudit } = useQuery({
     queryKey: ["latest-audit"],
     queryFn: () => auditApi.getLatest(),

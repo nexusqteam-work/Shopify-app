@@ -10,7 +10,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 export const Route = createFileRoute("/competitors")({
   head: () => ({
     meta: [
-      { title: "Competitors - StoreCoach" },
+      { title: "Competitors - Flovix" },
       { name: "description", content: "Competitive intelligence on rival Shopify stores updated daily." },
     ],
   }),
@@ -186,9 +186,9 @@ function CompetitorsPage() {
           const reviews = latestSnapshot.reviewScore ?? competitor.reviews ?? 0;
           const apps = latestSnapshot.appCount ?? competitor.apps ?? 0;
           const aiInsight = latestSnapshot.aiInsight ?? competitor.insight ?? "";
-          
+
           const speedColor = speed !== null && speed < 3 ? "var(--emerald-brand)" : speed !== null && speed > 5 ? "var(--danger)" : "var(--warn)";
-          
+
           return (
             <div key={competitor.id} className="surface-card p-6 animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
               <div className="flex items-start justify-between mb-5">
@@ -207,7 +207,7 @@ function CompetitorsPage() {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => refreshMutation.mutate(competitor.id)}
@@ -282,7 +282,7 @@ function CompetitorsPage() {
             <p className="text-[13px] mb-4" style={{ color: "var(--text-secondary)" }}>
               Enter the domain of a competitor Shopify store to monitor their performance.
             </p>
-            
+
             <form onSubmit={handleModalSubmit} className="space-y-4">
               <div>
                 <label className="block text-[12.5px] font-semibold mb-1.5">

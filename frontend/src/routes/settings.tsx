@@ -9,8 +9,8 @@ import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings - StoreCoach" },
-      { name: "description", content: "Manage your StoreCoach workspace, integrations and notifications." },
+      { title: "Settings - Flovix" },
+      { name: "description", content: "Manage your Flovix workspace, integrations and notifications." },
     ],
   }),
   component: SettingsPage,
@@ -52,7 +52,7 @@ function Section({
 
 function Toggle({ label, defaultChecked = false }: { label: string; defaultChecked?: boolean }) {
   const storageKey = `setting_${label.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`;
-  
+
   const [checked, setChecked] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(storageKey);
@@ -160,7 +160,7 @@ function SettingsPage() {
           </div>
         </Section>
 
-        <Section icon={Bell} title="Notifications" description="Choose when StoreCoach should alert you." delay={120}>
+        <Section icon={Bell} title="Notifications" description="Choose when Flovix should alert you." delay={120}>
           <Toggle label="New critical issue detected" defaultChecked />
           <Toggle label="Weekly performance report (Monday 9 AM)" defaultChecked />
           <Toggle label="Competitor activity changes" defaultChecked />
@@ -182,7 +182,7 @@ function SettingsPage() {
           <Section
             icon={CreditCard}
             title="Billing"
-            description={`${merchant?.plan ?? "StoreCoach"} plan${merchant?.currency ? ` · billed in ${merchant.currency}` : ""}.`}
+            description={`${merchant?.plan ?? "Flovix"} plan${merchant?.currency ? ` · billed in ${merchant.currency}` : ""}.`}
             delay={280}
           >
             <button className="w-full text-[13px] font-semibold py-2.5 rounded-xl gradient-emerald text-white glow-emerald hover:opacity-95">

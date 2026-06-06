@@ -77,13 +77,13 @@ function Connect() {
       <div className="surface-card w-full max-w-md p-8 animate-fade-up">
         <div className="text-center mb-8">
           <div className="mx-auto size-14 bg-white rounded-2xl flex items-center justify-center mb-4 border shadow-sm overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-            <img src={logoUrl} alt="StoreCoach Logo" className="size-10 object-contain" />
+            <img src={logoUrl} alt="Flovix Logo" className="size-10 object-contain" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Connect your Shopify store</h1>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {isLoading
               ? 'We are finalizing your Shopify connection.'
-              : 'Enter your store domain to get started with StoreCoach.'}
+              : 'Enter your store domain to get started with Flovix.'}
           </p>
         </div>
 

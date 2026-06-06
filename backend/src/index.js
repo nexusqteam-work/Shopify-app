@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════
-//  StoreCoach Backend — Main Server Entry Point
+//  Flovix Backend — Main Server Entry Point
 // ═══════════════════════════════════════════════════
 
 import 'dotenv/config';
@@ -89,7 +89,7 @@ app.use('/api/', generalLimiter);
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'StoreCoach API',
+    service: 'Flovix API',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
@@ -109,20 +109,20 @@ app.get('/', (req, res) => {
 });
 
 // ── API Routes ────────────────────────────────────────
-app.use('/api/auth',          authRoutes);
-app.use('/api/shopify',       shopifyRoutes);
-app.use('/api/audits',        auditRoutes);
-app.use('/api/issues',        issueRoutes);
-app.use('/api/chat',          chatRoutes);
-app.use('/api/competitors',   competitorRoutes);
-app.use('/api/metrics',       metricsRoutes);
-app.use('/api/reports',       reportRoutes);
-app.use('/api/webhooks',      webhookRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/shopify', shopifyRoutes);
+app.use('/api/audits', auditRoutes);
+app.use('/api/issues', issueRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/competitors', competitorRoutes);
+app.use('/api/metrics', metricsRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/webhooks', webhookRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/gdpr',          gdprRoutes);
+app.use('/api/gdpr', gdprRoutes);
 app.use('/api/billing/webhook', express.raw({ type: 'application/json' }));
-app.use('/api/billing',       billingRoutes);
-app.use('/api/visual-audit',  visualAuditRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/visual-audit', visualAuditRoutes);
 
 // ── 404 & Error Handling ──────────────────────────────
 app.use(notFound);

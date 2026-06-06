@@ -22,11 +22,11 @@ export function FloatingAdvisor() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <div className="size-9 rounded-xl bg-white flex items-center justify-center border overflow-hidden shrink-0" style={{ borderColor: "var(--border)" }}>
-                <img src={logoUrl} alt="AI Store Coach" className="size-7 object-contain" />
+                <img src={logoUrl} alt="AI Flovix" className="size-7 object-contain" />
               </div>
               <div>
                 <div className="display text-[14px] font-bold tracking-tight leading-tight">
-                  AI Store Coach
+                  AI Flovix
                 </div>
                 <div
                   className="text-[10.5px] mono inline-flex items-center gap-1.5 mt-0.5"
@@ -75,7 +75,7 @@ export function FloatingAdvisor() {
           className="absolute inset-0 rounded-full animate-ping opacity-15"
           style={{ background: "var(--border)" }}
         />
-        {open ? <X className="size-5 relative text-[var(--text-secondary)]" /> : <img src={logoUrl} alt="StoreCoach Logo" className="size-11 object-contain relative" />}
+        {open ? <X className="size-5 relative text-[var(--text-secondary)]" /> : <img src={logoUrl} alt="Flovix Logo" className="size-11 object-contain relative" />}
       </button>
     </div>
   );

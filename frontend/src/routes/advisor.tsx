@@ -11,8 +11,8 @@ import { ErrorState } from "@/components/ui/ErrorState";
 export const Route = createFileRoute("/advisor")({
   head: () => ({
     meta: [
-      { title: "AI Advisor — StoreCoach" },
-      { name: "description", content: "Chat with an AI store coach that has full context on your Shopify data." },
+      { title: "AI Advisor — Flovix" },
+      { name: "description", content: "Chat with an AI Flovix that has full context on your Shopify data." },
     ],
   }),
   component: AdvisorPage,
@@ -28,7 +28,7 @@ const SUGGESTIONS = [
 ];
 
 const getWelcomeMessage = (shopName?: string) =>
-  `Hi! I'm your AI Store Coach for ${shopName || 'your store'}. I have full access to your live Shopify data and your complete audit results.\n\nAsk me anything:\n• Why did my sales drop?\n• Which products to promote?\n• How do I fix the speed issue?\n• What should I focus on this week?`;
+  `Hi! I'm your AI Flovix for ${shopName || 'your store'}. I have full access to your live Shopify data and your complete audit results.\n\nAsk me anything:\n• Why did my sales drop?\n• Which products to promote?\n• How do I fix the speed issue?\n• What should I focus on this week?`;
 
 function nowTs() {
   return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
@@ -109,13 +109,13 @@ function AdvisorPage() {
             <div key={m._id || i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""} animate-fade-up`}>
               {m.role === "ai" && (
                 <div className="size-8 rounded-full bg-white flex items-center justify-center shrink-0 border overflow-hidden" style={{ borderColor: "var(--border)" }}>
-                  <img src={logoUrl} alt="AI Store Coach" className="size-6 object-contain" />
+                  <img src={logoUrl} alt="AI Flovix" className="size-6 object-contain" />
                 </div>
               )}
               <div className={`max-w-[78%] ${m.role === "user" ? "items-end" : ""} flex flex-col`}>
                 {m.role === "ai" && (
                   <div className="display text-[12px] font-bold mb-1" style={{ color: "var(--text-secondary)" }}>
-                    AI Store Coach
+                    AI Flovix
                   </div>
                 )}
                 <div
@@ -139,7 +139,7 @@ function AdvisorPage() {
           {typing && (
             <div className="flex gap-3 animate-fade-up">
               <div className="size-8 rounded-full bg-white flex items-center justify-center shrink-0 border overflow-hidden" style={{ borderColor: "var(--border)" }}>
-                <img src={logoUrl} alt="AI Store Coach" className="size-6 object-contain" />
+                <img src={logoUrl} alt="AI Flovix" className="size-6 object-contain" />
               </div>
               <div
                 className="px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1.5"

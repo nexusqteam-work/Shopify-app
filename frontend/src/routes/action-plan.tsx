@@ -13,7 +13,7 @@ import { Code, RefreshCw, CheckCircle, Sparkles, Copy } from "lucide-react";
 export const Route = createFileRoute("/action-plan")({
   head: () => ({
     meta: [
-      { title: "Action Plan - StoreCoach" },
+      { title: "Action Plan - Flovix" },
       { name: "description", content: "Prioritized fixes with revenue impact, effort, and step-by-step instructions." },
     ],
   }),
@@ -52,7 +52,7 @@ function ActionPlanPage() {
   const [filter, setFilter] = useState<Filter>("All");
   const [sort, setSort] = useState<Sort>("By Revenue Impact");
   const { codeGen } = usePlanFeatures();
-  
+
   const { data: issuesRes, isPending, isError, refetch } = useQuery({
     queryKey: ["issues"],
     queryFn: () => issuesApi.getAll(),
@@ -75,7 +75,7 @@ function ActionPlanPage() {
     if (sort === "By Revenue Impact") sorted.sort((a: any, b: any) => b.impact - a.impact);
     if (sort === "By Effort") sorted.sort((a: any, b: any) => a.effortMinutes - b.effortMinutes);
     if (sort === "By Category") sorted.sort((a: any, b: any) => a.category.localeCompare(b.category));
-    
+
     // Add rank
     return sorted.map((issue: any, index: number) => ({ ...issue, rank: index + 1 }));
   }, [filter, sort, sourceIssues]);
@@ -302,7 +302,7 @@ function ActionPlanIssueCard({ issue, index, queryClient, codeGen }: { issue: an
               <div className="mt-5 border-t pt-4" style={{ borderColor: "color-mix(in oklab, var(--emerald-brand) 20%, transparent)" }}>
                 <div className="flex items-center gap-3 mb-2">
                   {!code ? (
-                    <button 
+                    <button
                       onClick={() => genMutation.mutate()}
                       disabled={genMutation.isPending}
                       className="text-[12.5px] font-semibold px-4 py-2 rounded-lg border border-blue-200 text-blue-700 bg-white hover:bg-blue-50 transition flex items-center gap-2"
@@ -326,7 +326,7 @@ function ActionPlanIssueCard({ issue, index, queryClient, codeGen }: { issue: an
 
                 {code && (
                   <div className="mt-3 bg-[#1e293b] rounded-xl overflow-hidden relative group">
-                    <button 
+                    <button
                       onClick={() => navigator.clipboard.writeText(code)}
                       className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition opacity-0 group-hover:opacity-100"
                     >

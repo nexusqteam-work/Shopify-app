@@ -4,11 +4,11 @@ import { Check, Sparkles, Zap, Crown, Bot } from "lucide-react";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing — StoreCoach" },
+      { title: "Pricing — Flovix" },
       {
         name: "description",
         content:
-          "StoreCoach pricing plans — Basic, Advanced, Pro, and Agent. AI-powered Shopify audits, auto-fixes, and a merchant chatbot priced from ₹999/month.",
+          "Flovix pricing plans — Basic, Advanced, Pro, and Agent. AI-powered Shopify audits, auto-fixes, and a merchant chatbot priced from ₹999/month.",
       },
     ],
   }),
@@ -74,7 +74,7 @@ const TIERS: Tier[] = [
     tagline: "A fully autonomous AI store operator, governed by your rules.",
     icon: Bot,
     paragraphs: [
-      "The Agent plan is StoreCoach's flagship offering, intended for high-volume stores, brands with in-house growth teams, and agencies managing portfolios of merchants. It includes everything in Pro and removes the human-in-the-loop requirement for the categories the merchant explicitly opts into: continuous SEO maintenance, dynamic merchandising, automated A/B tests on product pages, scheduled price experiments within configured bands, abandoned-cart sequence optimization, and proactive incident response when an audit detects a regression. The agent operates inside a policy file the merchant configures once — defining price floors and ceilings, allowed discount ranges, blocked SKUs, brand voice, and approval thresholds — and every autonomous action is recorded with a full audit trail and a one-click revert.",
+      "The Agent plan is Flovix's flagship offering, intended for high-volume stores, brands with in-house growth teams, and agencies managing portfolios of merchants. It includes everything in Pro and removes the human-in-the-loop requirement for the categories the merchant explicitly opts into: continuous SEO maintenance, dynamic merchandising, automated A/B tests on product pages, scheduled price experiments within configured bands, abandoned-cart sequence optimization, and proactive incident response when an audit detects a regression. The agent operates inside a policy file the merchant configures once — defining price floors and ceilings, allowed discount ranges, blocked SKUs, brand voice, and approval thresholds — and every autonomous action is recorded with a full audit trail and a one-click revert.",
       "Usage limits move from numerical ceilings to fair-use guardrails: unlimited audits and unlimited chatbot messages, unlimited connected stores, priority AI capacity with a dedicated model pool, and SLA-backed response times. The agent can perform bulk operations of any size, but any single action whose estimated revenue impact exceeds the configured threshold escalates to the merchant via Slack or email and waits for approval. Restricted categories — refunds, customer data exports, payment configuration, and storefront takedowns — remain permanently behind explicit human confirmation regardless of policy settings, because some actions should never be autonomous.",
     ],
     enforcement:
@@ -114,9 +114,8 @@ function PricingPage() {
           return (
             <article
               key={t.id}
-              className={`relative flex flex-col rounded-2xl border bg-white p-6 transition ${
-                t.highlight ? "shadow-xl" : ""
-              }`}
+              className={`relative flex flex-col rounded-2xl border bg-white p-6 transition ${t.highlight ? "shadow-xl" : ""
+                }`}
               style={{
                 borderColor: t.highlight ? "var(--emerald-brand)" : "var(--border)",
                 boxShadow: t.highlight
@@ -133,9 +132,8 @@ function PricingPage() {
               )}
               <div className="flex items-center gap-3">
                 <div
-                  className={`size-10 rounded-xl flex items-center justify-center ${
-                    t.highlight ? "gradient-emerald glow-emerald" : ""
-                  }`}
+                  className={`size-10 rounded-xl flex items-center justify-center ${t.highlight ? "gradient-emerald glow-emerald" : ""
+                    }`}
                   style={
                     t.highlight
                       ? undefined
@@ -168,11 +166,10 @@ function PricingPage() {
 
               <a
                 href={`#${t.id}`}
-                className={`mt-5 inline-flex items-center justify-center gap-2 w-full text-[13px] font-semibold py-2.5 rounded-xl transition ${
-                  t.highlight
-                    ? "gradient-emerald text-white glow-emerald hover:opacity-95"
-                    : "border hover:bg-[var(--muted)]"
-                }`}
+                className={`mt-5 inline-flex items-center justify-center gap-2 w-full text-[13px] font-semibold py-2.5 rounded-xl transition ${t.highlight
+                  ? "gradient-emerald text-white glow-emerald hover:opacity-95"
+                  : "border hover:bg-[var(--muted)]"
+                  }`}
                 style={t.highlight ? undefined : { borderColor: "var(--border)" }}
               >
                 Read full plan

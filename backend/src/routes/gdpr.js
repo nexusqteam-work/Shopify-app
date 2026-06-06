@@ -29,7 +29,7 @@ function verifyGDPR(req, res, next) {
 
   try {
     req.webhookBody = JSON.parse(rawBody.toString());
-    req.shopDomain  = shopDomain;
+    req.shopDomain = shopDomain;
   } catch (e) {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
@@ -48,7 +48,7 @@ router.post('/customers/data-request', async (req, res) => {
     logger.info(`GDPR data request: shop=${shop_domain} customer=${customer?.id}`);
 
     // Log the request — in production you would email the data to the merchant
-    // StoreCoach stores: chat messages tied to merchantId (not customer-level)
+    // Flovix stores: chat messages tied to merchantId (not customer-level)
     // We do NOT store personal customer PII — only aggregate order metrics
 
     // Acknowledge immediately (Shopify requires < 5s response)
@@ -71,12 +71,12 @@ router.post('/customers/redact', async (req, res) => {
 
     // Find the merchant
     const merchant = await db.merchant.findUnique({
-      where:  { shopDomain: shop_domain },
+      where: { shopDomain: shop_domain },
       select: { id: true },
     });
 
     if (merchant) {
-      // StoreCoach does not store individual customer PII.
+      // Flovix does not store individual customer PII.
       // We store: aggregate store metrics (no customer identifiers)
       // We store: chat messages (merchant's own words, not customer data)
       // Nothing to delete at customer level — log for compliance record.
@@ -98,7 +98,7 @@ router.post('/shop/redact', async (req, res) => {
     logger.info(`GDPR shop redact: ${shop_domain}`);
 
     const merchant = await db.merchant.findUnique({
-      where:  { shopDomain: shop_domain },
+      where: { shopDomain: shop_domain },
       select: { id: true, isActive: true },
     });
 

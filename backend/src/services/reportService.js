@@ -14,18 +14,18 @@ export async function generateWeeklyReport(merchantId) {
   const merchant = await db.merchant.findUnique({ where: { id: merchantId } });
   if (!merchant) throw new Error('Merchant not found');
 
-  const now     = new Date();
+  const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   // Get this week's metrics
   const metrics = await db.storeMetric.findMany({
-    where:   { merchantId, date: { gte: weekAgo } },
+    where: { merchantId, date: { gte: weekAgo } },
     orderBy: { date: 'asc' },
   });
 
   const prevWeekStart = new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000);
   const prevMetrics = await db.storeMetric.findMany({
-    where:   { merchantId, date: { gte: prevWeekStart, lt: weekAgo } },
+    where: { merchantId, date: { gte: prevWeekStart, lt: weekAgo } },
     orderBy: { date: 'asc' },
   });
 
@@ -34,25 +34,25 @@ export async function generateWeeklyReport(merchantId) {
   const lastWeek = aggregateMetrics(prevMetrics);
 
   // Get issues status
-  const openIssues  = await db.issue.count({ where: { merchantId, isFixed: false } });
+  const openIssues = await db.issue.count({ where: { merchantId, isFixed: false } });
   const fixedIssues = await db.issue.count({ where: { merchantId, isFixed: true } });
 
   // Get latest audit score
   const latestAudit = await db.audit.findFirst({
-    where:   { merchantId, status: 'COMPLETED' },
+    where: { merchantId, status: 'COMPLETED' },
     orderBy: { completedAt: 'desc' },
-    select:  { overallScore: true, totalRevenueLoss: true },
+    select: { overallScore: true, totalRevenueLoss: true },
   });
 
   const reportData = {
-    period:       getWeekPeriod(now),
-    merchant:     { name: merchant.shopName, domain: merchant.shopDomain },
+    period: getWeekPeriod(now),
+    merchant: { name: merchant.shopName, domain: merchant.shopDomain },
     thisWeek,
     lastWeek,
-    changes:      calculateChanges(thisWeek, lastWeek),
-    issues:       { open: openIssues, fixed: fixedIssues },
-    auditScore:   latestAudit?.overallScore,
-    revenueLoss:  latestAudit?.totalRevenueLoss,
+    changes: calculateChanges(thisWeek, lastWeek),
+    issues: { open: openIssues, fixed: fixedIssues },
+    auditScore: latestAudit?.overallScore,
+    revenueLoss: latestAudit?.totalRevenueLoss,
   };
 
   // Generate AI summary
@@ -65,7 +65,7 @@ export async function generateWeeklyReport(merchantId) {
 
   // Save report (upsert in case already exists)
   const report = await db.report.upsert({
-    where:  { merchantId_type_period: { merchantId, type: 'WEEKLY', period: periodStr } },
+    where: { merchantId_type_period: { merchantId, type: 'WEEKLY', period: periodStr } },
     create: { merchantId, type: 'WEEKLY', period: periodStr, data: reportData, aiSummary: reportData.aiSummary },
     update: { data: reportData, aiSummary: reportData.aiSummary },
   });
@@ -75,8 +75,8 @@ export async function generateWeeklyReport(merchantId) {
     .then(async () => {
       await db.report.update({
         where: { id: report.id },
-        data:  { emailSentAt: new Date() },
-      }).catch(() => {});
+        data: { emailSentAt: new Date() },
+      }).catch(() => { });
     })
     .catch((err) => {
       logger.error(`Failed to send weekly email to ${merchant.email}:`, err);
@@ -90,12 +90,12 @@ export async function generateWeeklyReport(merchantId) {
 function aggregateMetrics(metrics) {
   if (!metrics.length) return { revenue: 0, orders: 0, visitors: 0, newCustomers: 0, avgCVR: 0, avgAOV: 0 };
   return {
-    revenue:      metrics.reduce((s, m) => s + m.revenue, 0),
-    orders:       metrics.reduce((s, m) => s + m.orders, 0),
-    visitors:     metrics.reduce((s, m) => s + m.visitors, 0),
+    revenue: metrics.reduce((s, m) => s + m.revenue, 0),
+    orders: metrics.reduce((s, m) => s + m.orders, 0),
+    visitors: metrics.reduce((s, m) => s + m.visitors, 0),
     newCustomers: metrics.reduce((s, m) => s + m.newCustomers, 0),
-    avgCVR:       metrics.reduce((s, m) => s + m.conversionRate, 0) / metrics.length,
-    avgAOV:       metrics.reduce((s, m) => s + m.avgOrderValue, 0) / metrics.length,
+    avgCVR: metrics.reduce((s, m) => s + m.conversionRate, 0) / metrics.length,
+    avgAOV: metrics.reduce((s, m) => s + m.avgOrderValue, 0) / metrics.length,
   };
 }
 
@@ -103,10 +103,10 @@ function aggregateMetrics(metrics) {
 function calculateChanges(current, previous) {
   const pct = (curr, prev) => prev === 0 ? 0 : ((curr - prev) / prev * 100).toFixed(1);
   return {
-    revenue:  pct(current.revenue, previous.revenue),
-    orders:   pct(current.orders, previous.orders),
+    revenue: pct(current.revenue, previous.revenue),
+    orders: pct(current.orders, previous.orders),
     visitors: pct(current.visitors, previous.visitors),
-    cvr:      pct(current.avgCVR, previous.avgCVR),
+    cvr: pct(current.avgCVR, previous.avgCVR),
   };
 }
 
@@ -127,9 +127,9 @@ Write in a direct, helpful tone. Mention one specific win and one key priority f
 
   try {
     const res = await ai.models.generateContent({
-      model:      'gemini-3.5-flash',
-      contents:   prompt,
-      config:     { maxOutputTokens: 200 },
+      model: 'gemini-3.5-flash',
+      contents: prompt,
+      config: { maxOutputTokens: 200 },
     });
     return res.text || '';
   } catch (err) {
@@ -144,7 +144,7 @@ export async function sendWeeklyReportEmail(merchant, data) {
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f7f8fc; padding: 24px;">
       <div style="background: #0D1320; padding: 24px; border-radius: 12px; margin-bottom: 20px;">
-        <h1 style="color: #00C896; margin: 0; font-size: 22px;">StoreCoach Weekly Report</h1>
+        <h1 style="color: #00C896; margin: 0; font-size: 22px;">Flovix Weekly Report</h1>
         <p style="color: #8A9BBF; margin: 8px 0 0;">${merchant.shopName} · ${new Date().toLocaleDateString('en-IN')}</p>
       </div>
 
@@ -191,7 +191,7 @@ export async function sendWeeklyReportEmail(merchant, data) {
       </div>
 
       <p style="color: #9AA5BE; font-size: 12px; text-align: center; margin-top: 16px;">
-        StoreCoach AI · Unsubscribe · ${merchant.shopDomain}
+        Flovix AI · Unsubscribe · ${merchant.shopDomain}
       </p>
     </div>
   `;

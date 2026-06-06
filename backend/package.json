@@ -1,7 +1,7 @@
 {
-  "name": "storecoach-backend",
+  "name": "Flovix-backend",
   "version": "1.0.0",
-  "description": "AI Store Coach - Shopify SaaS Backend",
+  "description": "AI Flovix - Shopify SaaS Backend",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

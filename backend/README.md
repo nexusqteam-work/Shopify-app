@@ -1,4 +1,4 @@
-# StoreCoach Backend — Complete Setup Guide
+# Flovix Backend — Complete Setup Guide
 
 AI-powered Shopify SaaS backend. Node.js + Express + PostgreSQL + Prisma + Claude AI.
 
@@ -7,7 +7,7 @@ AI-powered Shopify SaaS backend. Node.js + Express + PostgreSQL + Prisma + Claud
 ## 🗂️ Project Structure
 
 ```
-storecoach/
+Flovix/
 ├── src/
 │   ├── index.js                  # Server entry point
 │   ├── middleware/
@@ -64,7 +64,7 @@ redis-cli ping    # Redis running
 ### 2. Install & Configure
 ```bash
 git clone <your-repo>
-cd storecoach
+cd Flovix
 npm install
 cp .env.example .env
 # Edit .env with your values
@@ -73,7 +73,7 @@ cp .env.example .env
 ### 3. Database Setup
 ```bash
 # Create database
-createdb storecoach
+createdb Flovix
 
 # Run migrations
 npx prisma migrate dev --name init

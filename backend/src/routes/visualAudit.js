@@ -4,10 +4,10 @@
 //  Enforces plan limits strictly
 // ═══════════════════════════════════════════════════
 
-import { Router }    from 'express';
+import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
-import { db }        from '../utils/db.js';
-import { logger }    from '../utils/logger.js';
+import { db } from '../utils/db.js';
+import { logger } from '../utils/logger.js';
 import { authenticate, requirePlan } from '../middleware/auth.js';
 import { auditLimiter } from '../middleware/rateLimiter.js';
 import {
@@ -30,11 +30,11 @@ function requireVisualAccess(req, res, next) {
   const config = VISUAL_FEATURES[req.merchant.plan];
   if (!config?.enabled) {
     return res.status(403).json({
-      success:         false,
-      error:           'Visual analysis requires Advanced plan (₹1,999/month) or higher',
+      success: false,
+      error: 'Visual analysis requires Advanced plan (₹1,999/month) or higher',
       upgradeRequired: true,
-      currentPlan:     req.merchant.plan,
-      requiredPlan:    'GROWTH',
+      currentPlan: req.merchant.plan,
+      requiredPlan: 'GROWTH',
     });
   }
   req.visualConfig = config;
@@ -45,11 +45,11 @@ function requireCodeGen(req, res, next) {
   const config = VISUAL_FEATURES[req.merchant.plan];
   if (!config?.codeGen) {
     return res.status(403).json({
-      success:         false,
-      error:           'Code generation requires Pro plan (₹2,999/month) or higher',
+      success: false,
+      error: 'Code generation requires Pro plan (₹2,999/month) or higher',
       upgradeRequired: true,
-      currentPlan:     req.merchant.plan,
-      requiredPlan:    'PRO',
+      currentPlan: req.merchant.plan,
+      requiredPlan: 'PRO',
     });
   }
   next();
@@ -59,11 +59,11 @@ function requireAutoFix(req, res, next) {
   const config = VISUAL_FEATURES[req.merchant.plan];
   if (!config?.autoFix) {
     return res.status(403).json({
-      success:         false,
-      error:           'Auto-fix requires Agent plan (₹29,999/month)',
+      success: false,
+      error: 'Auto-fix requires Agent plan (₹29,999/month)',
       upgradeRequired: true,
-      currentPlan:     req.merchant.plan,
-      requiredPlan:    'AGENCY',
+      currentPlan: req.merchant.plan,
+      requiredPlan: 'AGENCY',
     });
   }
   next();
@@ -89,8 +89,8 @@ router.post('/run', auditLimiter, requireVisualAccess, async (req, res, next) =>
         });
       } else {
         return res.status(409).json({
-          success:       false,
-          error:         'Visual audit already in progress',
+          success: false,
+          error: 'Visual audit already in progress',
           visualAuditId: running.id,
         });
       }
@@ -100,8 +100,8 @@ router.post('/run', auditLimiter, requireVisualAccess, async (req, res, next) =>
     const visualAudit = await db.visualAudit.create({
       data: {
         merchantId: req.merchant.id,
-        status:     'RUNNING',
-        plan:       req.merchant.plan,
+        status: 'RUNNING',
+        plan: req.merchant.plan,
       },
     });
 
@@ -110,10 +110,10 @@ router.post('/run', auditLimiter, requireVisualAccess, async (req, res, next) =>
       .catch(err => logger.error(`Visual audit job failed: ${err.message}`));
 
     res.status(202).json({
-      success:       true,
-      message:       'Visual audit started',
+      success: true,
+      message: 'Visual audit started',
       visualAuditId: visualAudit.id,
-      pagesPlanned:  req.visualConfig.pages,
+      pagesPlanned: req.visualConfig.pages,
       checksPlanned: req.visualConfig.checks,
     });
   } catch (err) { next(err); }
@@ -123,7 +123,7 @@ router.post('/run', auditLimiter, requireVisualAccess, async (req, res, next) =>
 async function runVisualAuditJob(visualAuditId, merchant, config) {
   try {
     // Fetch products for product page scanning
-    const client   = createShopifyClient(merchant.shopDomain, merchant.accessToken);
+    const client = createShopifyClient(merchant.shopDomain, merchant.accessToken);
     const products = await fetchProducts(client);
 
     // Run the visual audit
@@ -136,7 +136,7 @@ async function runVisualAuditJob(visualAuditId, merchant, config) {
     if (!result.enabled) {
       await db.visualAudit.update({
         where: { id: visualAuditId },
-        data:  { status: 'FAILED' },
+        data: { status: 'FAILED' },
       });
       return;
     }
@@ -145,13 +145,13 @@ async function runVisualAuditJob(visualAuditId, merchant, config) {
     if (result.issues.length > 0) {
       await db.issue.createMany({
         data: result.issues.map(issue => ({
-          merchantId:      merchant.id,
-          priority:        issue.priority,
-          category:        issue.category,
-          title:           issue.title,
-          description:     issue.description,
-          impact:          issue.impact,
-          effortMinutes:   issue.effortMinutes,
+          merchantId: merchant.id,
+          priority: issue.priority,
+          category: issue.category,
+          title: issue.title,
+          description: issue.description,
+          impact: issue.impact,
+          effortMinutes: issue.effortMinutes,
           fixInstructions: issue.fixDescription,
           shopifyAdminUrl: issue.shopifyAdminUrl || null,
         })),
@@ -163,11 +163,11 @@ async function runVisualAuditJob(visualAuditId, merchant, config) {
     await db.visualAudit.update({
       where: { id: visualAuditId },
       data: {
-        status:      'COMPLETED',
-        score:       result.score,
+        status: 'COMPLETED',
+        score: result.score,
         pagesScanned: result.pagesScanned,
         pageResults: result.pageResults,
-        aiAnalysis:  result.aiAnalysis,
+        aiAnalysis: result.aiAnalysis,
         completedAt: new Date(),
       },
     });
@@ -176,10 +176,10 @@ async function runVisualAuditJob(visualAuditId, merchant, config) {
     await db.notification.create({
       data: {
         merchantId: merchant.id,
-        type:       'visual_audit_complete',
-        title:      'Visual Audit Complete 🎨',
-        body:       `Found ${result.issues.length} visual conversion issues. Visual score: ${result.score}/100`,
-        data:       { visualAuditId, issueCount: result.issues.length, score: result.score },
+        type: 'visual_audit_complete',
+        title: 'Visual Audit Complete 🎨',
+        body: `Found ${result.issues.length} visual conversion issues. Visual score: ${result.score}/100`,
+        data: { visualAuditId, issueCount: result.issues.length, score: result.score },
       },
     });
 
@@ -194,8 +194,8 @@ async function runVisualAuditJob(visualAuditId, merchant, config) {
     logger.error(`Visual audit job error: ${err.message}`);
     await db.visualAudit.update({
       where: { id: visualAuditId },
-      data:  { status: 'FAILED' },
-    }).catch(() => {});
+      data: { status: 'FAILED' },
+    }).catch(() => { });
   }
 }
 
@@ -216,7 +216,7 @@ async function autoApplyLowRiskFixes(issues, merchant, visualAuditId) {
       const savedIssue = await db.issue.findFirst({
         where: {
           merchantId: merchant.id,
-          title:      issue.title,
+          title: issue.title,
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -230,16 +230,16 @@ async function autoApplyLowRiskFixes(issues, merchant, visualAuditId) {
       // Save code fix record
       const codeFix = await db.codeFix.create({
         data: {
-          merchantId:    merchant.id,
-          issueId:       savedIssue.id,
+          merchantId: merchant.id,
+          issueId: savedIssue.id,
           visualAuditId,
-          cssCode:       fixData.cssCode,
-          liquidNote:    fixData.liquidNote,
-          explanation:   fixData.explanation,
-          riskLevel:     fixData.riskLevel,
-          status:        'GENERATED',
-          themeId:       fixData.themeId,
-          tokensUsed:    fixData.tokensUsed,
+          cssCode: fixData.cssCode,
+          liquidNote: fixData.liquidNote,
+          explanation: fixData.explanation,
+          riskLevel: fixData.riskLevel,
+          status: 'GENERATED',
+          themeId: fixData.themeId,
+          tokensUsed: fixData.tokensUsed,
         },
       });
 
@@ -249,16 +249,16 @@ async function autoApplyLowRiskFixes(issues, merchant, visualAuditId) {
       if (applyResult.success) {
         await db.codeFix.update({
           where: { id: codeFix.id },
-          data:  { status: 'APPLIED', appliedAt: new Date() },
+          data: { status: 'APPLIED', appliedAt: new Date() },
         });
 
         await db.notification.create({
           data: {
             merchantId: merchant.id,
-            type:       'auto_fix_applied',
-            title:      'Auto-Fix Applied ⚡',
-            body:       `Automatically fixed: ${issue.title}`,
-            data:       { issueId: savedIssue.id, codeFixId: codeFix.id },
+            type: 'auto_fix_applied',
+            title: 'Auto-Fix Applied ⚡',
+            body: `Automatically fixed: ${issue.title}`,
+            data: { issueId: savedIssue.id, codeFixId: codeFix.id },
           },
         });
 
@@ -281,9 +281,9 @@ async function autoApplyLowRiskFixes(issues, merchant, visualAuditId) {
 router.get('/', requireVisualAccess, async (req, res, next) => {
   try {
     const audits = await db.visualAudit.findMany({
-      where:   { merchantId: req.merchant.id },
+      where: { merchantId: req.merchant.id },
       orderBy: { createdAt: 'desc' },
-      take:    20,
+      take: 20,
       select: {
         id: true, status: true, score: true,
         pagesScanned: true, aiAnalysis: true,
@@ -301,7 +301,7 @@ router.get('/', requireVisualAccess, async (req, res, next) => {
 router.get('/latest', requireVisualAccess, async (req, res, next) => {
   try {
     const audit = await db.visualAudit.findFirst({
-      where:   { merchantId: req.merchant.id, status: 'COMPLETED' },
+      where: { merchantId: req.merchant.id, status: 'COMPLETED' },
       orderBy: { completedAt: 'desc' },
     });
     res.json({
@@ -320,7 +320,7 @@ router.get('/latest', requireVisualAccess, async (req, res, next) => {
 router.get('/:id/status', requireVisualAccess, async (req, res, next) => {
   try {
     const audit = await db.visualAudit.findFirst({
-      where:  { id: req.params.id, merchantId: req.merchant.id },
+      where: { id: req.params.id, merchantId: req.merchant.id },
       select: { id: true, status: true, score: true, pagesScanned: true, completedAt: true },
     });
     if (!audit) return res.status(404).json({ success: false, error: 'Audit not found' });
@@ -335,13 +335,13 @@ router.get('/:id/status', requireVisualAccess, async (req, res, next) => {
 router.get('/issues/list', requireVisualAccess, async (req, res, next) => {
   try {
     const issues = await db.issue.findMany({
-      where:   { merchantId: req.merchant.id, isFixed: false },
+      where: { merchantId: req.merchant.id, isFixed: false },
       orderBy: [{ priority: 'asc' }, { impact: 'desc' }],
       include: {
         codeFixes: {
           orderBy: { createdAt: 'desc' },
-          take:    1,
-          select:  { id: true, status: true, riskLevel: true, appliedAt: true },
+          take: 1,
+          select: { id: true, status: true, riskLevel: true, appliedAt: true },
         },
       },
     });
@@ -367,7 +367,7 @@ router.post('/generate-fix/:issueId', requireCodeGen, async (req, res, next) => 
 
     // Check if fix already generated
     const existing = await db.codeFix.findFirst({
-      where:   { issueId: issue.id, status: { in: ['GENERATED', 'APPLIED'] } },
+      where: { issueId: issue.id, status: { in: ['GENERATED', 'APPLIED'] } },
       orderBy: { createdAt: 'desc' },
     });
     if (existing) {
@@ -393,15 +393,15 @@ router.post('/generate-fix/:issueId', requireCodeGen, async (req, res, next) => 
     // Save to database
     const codeFix = await db.codeFix.create({
       data: {
-        merchantId:  req.merchant.id,
-        issueId:     issue.id,
-        cssCode:     fixData.cssCode,
-        liquidNote:  fixData.liquidNote,
+        merchantId: req.merchant.id,
+        issueId: issue.id,
+        cssCode: fixData.cssCode,
+        liquidNote: fixData.liquidNote,
         explanation: fixData.explanation,
-        riskLevel:   fixData.riskLevel,
-        status:      'GENERATED',
-        themeId:     fixData.themeId?.toString(),
-        tokensUsed:  fixData.tokensUsed,
+        riskLevel: fixData.riskLevel,
+        status: 'GENERATED',
+        themeId: fixData.themeId?.toString(),
+        tokensUsed: fixData.tokensUsed,
       },
     });
 
@@ -428,7 +428,7 @@ router.post('/generate-fix/:issueId', requireCodeGen, async (req, res, next) => 
 router.post('/apply-fix/:codeFixId', requireAutoFix, async (req, res, next) => {
   try {
     const codeFix = await db.codeFix.findFirst({
-      where:   { id: req.params.codeFixId, merchantId: req.merchant.id },
+      where: { id: req.params.codeFixId, merchantId: req.merchant.id },
       include: { issue: true },
     });
     if (!codeFix) {
@@ -440,16 +440,16 @@ router.post('/apply-fix/:codeFixId', requireAutoFix, async (req, res, next) => {
     if (codeFix.riskLevel === 'HIGH') {
       return res.status(400).json({
         success: false,
-        error:   'HIGH risk fixes cannot be auto-applied. Apply manually after reviewing the code.',
+        error: 'HIGH risk fixes cannot be auto-applied. Apply manually after reviewing the code.',
       });
     }
 
     // Apply to theme
     const result = await applyFixCode(
       {
-        cssCode:  codeFix.cssCode,
-        themeId:  codeFix.themeId,
-        issueId:  codeFix.issueId,
+        cssCode: codeFix.cssCode,
+        themeId: codeFix.themeId,
+        issueId: codeFix.issueId,
         riskLevel: codeFix.riskLevel,
       },
       req.merchant,
@@ -463,25 +463,25 @@ router.post('/apply-fix/:codeFixId', requireAutoFix, async (req, res, next) => {
     // Update status
     const updated = await db.codeFix.update({
       where: { id: codeFix.id },
-      data:  { status: 'APPLIED', appliedAt: new Date() },
+      data: { status: 'APPLIED', appliedAt: new Date() },
     });
 
     // Create notification
     await db.notification.create({
       data: {
         merchantId: req.merchant.id,
-        type:       'fix_applied',
-        title:      'Fix Applied to Store ✅',
-        body:       `Applied: ${codeFix.issue?.title}. Changes are live on your store.`,
-        data:       { codeFixId: codeFix.id, issueId: codeFix.issueId },
+        type: 'fix_applied',
+        title: 'Fix Applied to Store ✅',
+        body: `Applied: ${codeFix.issue?.title}. Changes are live on your store.`,
+        data: { codeFixId: codeFix.id, issueId: codeFix.issueId },
       },
     });
 
     res.json({
-      success:   true,
-      codeFix:   updated,
+      success: true,
+      codeFix: updated,
       appliedAt: result.appliedAt,
-      message:   'Fix applied successfully. Check your store to verify the change.',
+      message: 'Fix applied successfully. Check your store to verify the change.',
     });
   } catch (err) { next(err); }
 });
@@ -510,7 +510,7 @@ router.post('/revert-fix/:codeFixId', requireCodeGen, async (req, res, next) => 
 
     await db.codeFix.update({
       where: { id: codeFix.id },
-      data:  { status: 'REVERTED', revertedAt: new Date() },
+      data: { status: 'REVERTED', revertedAt: new Date() },
     });
 
     res.json({ success: true, message: 'Fix reverted. Your theme is restored.' });
@@ -532,12 +532,12 @@ router.post('/revert-all', requireCodeGen, async (req, res, next) => {
     // Mark all applied fixes as reverted
     await db.codeFix.updateMany({
       where: { merchantId: req.merchant.id, status: 'APPLIED' },
-      data:  { status: 'REVERTED', revertedAt: new Date() },
+      data: { status: 'REVERTED', revertedAt: new Date() },
     });
 
     res.json({
       success: true,
-      message: 'All StoreCoach fixes reverted. Your theme is fully restored to its original state.',
+      message: 'All Flovix fixes reverted. Your theme is fully restored to its original state.',
     });
   } catch (err) { next(err); }
 });
@@ -555,7 +555,7 @@ router.get('/code-fixes', requireCodeGen, async (req, res, next) => {
     const fixes = await db.codeFix.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take:    50,
+      take: 50,
       include: {
         issue: {
           select: { title: true, category: true, priority: true, impact: true },
@@ -575,10 +575,10 @@ router.get('/code-fixes', requireCodeGen, async (req, res, next) => {
       success: true,
       fixes: normalizedFixes,
       summary: {
-        total:    normalizedFixes.length,
-        applied:  normalizedFixes.filter(f => f.status === 'APPLIED').length,
+        total: normalizedFixes.length,
+        applied: normalizedFixes.filter(f => f.status === 'APPLIED').length,
         reverted: normalizedFixes.filter(f => f.status === 'REVERTED').length,
-        pending:  normalizedFixes.filter(f => f.status === 'GENERATED').length,
+        pending: normalizedFixes.filter(f => f.status === 'GENERATED').length,
       },
     });
   } catch (err) { next(err); }
@@ -592,26 +592,26 @@ router.get('/plan-info', async (req, res) => {
   const config = VISUAL_FEATURES[req.merchant.plan] || VISUAL_FEATURES.FREE;
   res.json({
     success: true,
-    plan:    req.merchant.plan,
+    plan: req.merchant.plan,
     features: {
       visualAnalysis: config.enabled,
-      pagesPerScan:   config.pages,
-      checksPerScan:  config.checks,
+      pagesPerScan: config.pages,
+      checksPerScan: config.checks,
       codeGeneration: config.codeGen,
-      autoFix:        config.autoFix,
+      autoFix: config.autoFix,
     },
     upgradeInfo: !config.enabled ? {
-      message:      'Upgrade to Advanced plan for visual DOM analysis',
+      message: 'Upgrade to Advanced plan for visual DOM analysis',
       requiredPlan: 'GROWTH',
-      price:        '₹1,999/month',
+      price: '₹1,999/month',
     } : !config.codeGen ? {
-      message:      'Upgrade to Pro plan for AI code generation',
+      message: 'Upgrade to Pro plan for AI code generation',
       requiredPlan: 'PRO',
-      price:        '₹2,999/month',
+      price: '₹2,999/month',
     } : !config.autoFix ? {
-      message:      'Upgrade to Agent plan for auto-fix',
+      message: 'Upgrade to Agent plan for auto-fix',
       requiredPlan: 'AGENCY',
-      price:        '₹29,999/month',
+      price: '₹29,999/month',
     } : null,
   });
 });

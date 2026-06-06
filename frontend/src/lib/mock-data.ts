@@ -1,4 +1,4 @@
-// Data contracts for AI Store Coach.
+// Data contracts for AI Flovix.
 // Mock values have been removed — wire each export to your backend
 // (server functions, API, or DB queries). Types and helpers are preserved
 // so existing UI/logic continues to compile and render empty states.

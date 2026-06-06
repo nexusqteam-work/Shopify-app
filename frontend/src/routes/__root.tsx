@@ -66,10 +66,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StoreCoach — AI Revenue Coach for Shopify" },
+      { title: "Flovix — AI Revenue Coach for Shopify" },
       { name: "description", content: "AI-powered Shopify dashboard that analyzes your store and gives actionable revenue recovery plans." },
-      { property: "og:title", content: "StoreCoach — AI Revenue Coach for Shopify" },
-      { name: "twitter:title", content: "StoreCoach — AI Revenue Coach for Shopify" },
+      { property: "og:title", content: "Flovix — AI Revenue Coach for Shopify" },
+      { name: "twitter:title", content: "Flovix — AI Revenue Coach for Shopify" },
       { property: "og:description", content: "AI-powered Shopify dashboard that analyzes your store and gives actionable revenue recovery plans." },
       { name: "twitter:description", content: "AI-powered Shopify dashboard that analyzes your store and gives actionable revenue recovery plans." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/46a5bd52-f7f2-4876-bc9a-db1b6f4518e4/id-preview-9bd22ceb--c4384e52-07cf-4cc1-ba51-a8b847df12ff.lovable.app-1780186195643.png" },
