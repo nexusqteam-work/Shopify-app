@@ -65,13 +65,13 @@ async function buildSystemPrompt(merchant) {
     : 'unknown';
 
   const issuesList = issues.map((i, idx) =>
-    `${idx + 1}. [${i.priority}] ${i.title} — ₹${i.impact.toLocaleString('en-IN')}/month loss | ${i.effortMinutes} min fix`
+    `${idx + 1}. [${i.priority}] ${i.title} — $${i.impact.toLocaleString('en-US')}/month loss | ${i.effortMinutes} min fix`
   ).join('\n');
 
   return `You are the AI Flovix for "${merchant.shopName}" (${merchant.shopDomain}), a Shopify store. You are a world-class ecommerce consultant with deep Shopify expertise.
 
 LIVE STORE DATA (last 30 days):
-- Revenue: ₹${totalRevenue.toLocaleString('en-IN')}
+- Revenue: $${totalRevenue.toLocaleString('en-US')}
 - Orders: ${totalOrders}
 - Avg Conversion Rate: ${avgCVR}%
 - Plan: ${merchant.plan}
@@ -93,7 +93,7 @@ YOUR ROLE:
 - Give specific, data-driven advice based on THIS store's actual numbers
 - Always reference the actual scores and issues above
 - Be direct and actionable — no generic advice
-- Use Indian Rupees (₹) for all money amounts
+- Use US Dollars ($) for all money amounts
 - Keep responses concise: answer in 3-5 sentences max unless the question needs detail
 - If asked to fix something, give the exact Shopify Admin path
 - If asked about something outside your data, say so clearly

@@ -41,7 +41,7 @@ async function main() {
       productScore:    52,
       checkoutScore:   71,
       mobileScore:     45,
-      aiSummary:       'Aura Lifestyle Store scored 52/100, significantly below the industry average of 72. The most critical issue is page speed — at 7.8 seconds on mobile, the store is losing approximately ₹38,000/month in potential revenue. Fixing the JavaScript bloat from 11 installed apps and enabling urgency signals on product pages would recover an estimated ₹62,000/month within 48 hours of implementation.',
+      aiSummary:       'Aura Lifestyle Store scored 52/100, significantly below the industry average of 72. The most critical issue is page speed — at 7.8 seconds on mobile, the store is losing approximately $38,000/month in potential revenue. Fixing the JavaScript bloat from 11 installed apps and enabling urgency signals on product pages would recover an estimated $62,000/month within 48 hours of implementation.',
       completedAt:     new Date(),
     },
   });
@@ -157,7 +157,7 @@ async function main() {
       merchantId: merchant.id,
       type:       'audit_complete',
       title:      'First Audit Complete! 🎉',
-      body:       'Found 5 issues costing ₹1,05,000/month. Check your Action Plan to start fixing.',
+      body:       'Found 5 issues costing $105,000/month. Check your Action Plan to start fixing.',
       data:       { auditId: audit.id },
     },
   });

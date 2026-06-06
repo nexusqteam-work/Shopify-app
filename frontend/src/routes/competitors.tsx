@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Star, Zap, IndianRupee, Package, Sparkles, Clock, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Star, Zap, DollarSign, Package, Sparkles, Clock, Trash2, RefreshCw } from "lucide-react";
 import { competitorsApi } from "@/lib/api";
 import { useMerchant } from "@/hooks/useMerchant";
 import { SkeletonList } from "@/components/ui/skeleton";
@@ -236,7 +236,7 @@ function CompetitorsPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                 <StatBox icon={Zap} label="Page Speed" value={speed !== null ? `${speed}s` : "Pending"} color={speedColor} />
-                <StatBox icon={IndianRupee} label="Price Range" value={priceLow || priceHigh ? `₹${priceLow.toLocaleString("en-IN")} - ₹${priceHigh.toLocaleString("en-IN")}` : "Pending"} />
+                <StatBox icon={DollarSign} label="Price Range" value={priceLow || priceHigh ? `$${priceLow.toLocaleString("en-US")} - $${priceHigh.toLocaleString("en-US")}` : "Pending"} />
                 <StatBox icon={Star} label="Review Score" value={reviews ? <Stars rating={reviews} /> : "Pending"} />
                 <StatBox icon={Package} label="Apps Installed" value={apps !== null ? `${apps} apps` : "Pending"} />
               </div>

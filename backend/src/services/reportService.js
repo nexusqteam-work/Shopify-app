@@ -115,7 +115,7 @@ async function generateReportSummary(data) {
   const prompt = `Write a 3-sentence weekly performance summary for a Shopify store.
 
 Store: ${data.merchant.name}
-This week revenue: ₹${data.thisWeek.revenue.toLocaleString('en-IN')} (${data.changes.revenue > 0 ? '+' : ''}${data.changes.revenue}% vs last week)
+This week revenue: $${data.thisWeek.revenue.toLocaleString('en-US')} (${data.changes.revenue > 0 ? '+' : ''}${data.changes.revenue}% vs last week)
 Orders: ${data.thisWeek.orders} (${data.changes.orders > 0 ? '+' : ''}${data.changes.orders}%)
 Visitors: ${data.thisWeek.visitors} (${data.changes.visitors > 0 ? '+' : ''}${data.changes.visitors}%)
 Conversion Rate: ${data.thisWeek.avgCVR?.toFixed(2)}%
@@ -134,7 +134,7 @@ Write in a direct, helpful tone. Mention one specific win and one key priority f
     return res.text || '';
   } catch (err) {
     logger.error('Report AI summary failed:', err);
-    return `This week ${data.merchant.name} generated ₹${data.thisWeek.revenue.toLocaleString('en-IN')} in revenue with ${data.thisWeek.orders} orders. Focus on fixing the ${data.issues.open} open store issues to improve performance next week.`;
+    return `This week ${data.merchant.name} generated $${data.thisWeek.revenue.toLocaleString('en-US')} in revenue with ${data.thisWeek.orders} orders. Focus on fixing the ${data.issues.open} open store issues to improve performance next week.`;
   }
 }
 
@@ -154,7 +154,7 @@ export async function sendWeeklyReportEmail(merchant, data) {
           <tr>
             <td style="padding: 10px 0; border-bottom: 1px solid #E8EDF5; color: #5A6A8A; font-size: 14px;">Revenue</td>
             <td style="padding: 10px 0; border-bottom: 1px solid #E8EDF5; font-weight: bold; font-size: 14px; text-align: right;">
-              ₹${data.thisWeek.revenue.toLocaleString('en-IN')}
+              $${data.thisWeek.revenue.toLocaleString('en-US')}
               <span style="color: ${data.changes.revenue >= 0 ? '#00C896' : '#EF4444'}; font-size: 12px; margin-left: 8px;">
                 ${data.changes.revenue >= 0 ? '↑' : '↓'} ${Math.abs(data.changes.revenue)}%
               </span>
@@ -180,7 +180,7 @@ export async function sendWeeklyReportEmail(merchant, data) {
         <h2 style="color: #0D1320; font-size: 16px; margin-top: 0;">⚡ Action Items</h2>
         <p style="color: #5A6A8A; font-size: 14px; margin: 0;">
           ${data.issues.open} issues open · ${data.issues.fixed} issues fixed this week.
-          ${data.issues.open > 0 ? `These are costing you an estimated ₹${data.revenueLoss?.toLocaleString('en-IN') || '0'}/month.` : 'Great job keeping your store healthy!'}
+          ${data.issues.open > 0 ? `These are costing you an estimated $${data.revenueLoss?.toLocaleString('en-US') || '0'}/month.` : 'Great job keeping your store healthy!'}
         </p>
       </div>
 

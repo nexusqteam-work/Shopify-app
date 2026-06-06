@@ -125,12 +125,13 @@ export const weeklyStats: {
 };
 
 export function formatINR(n: number): string {
-  if (n >= 100000) return `₹${(n / 100000).toFixed(2)}L`;
-  return `₹${n.toLocaleString("en-IN")}`;
+  if (n >= 1000000) return `$${(n / 1000000).toFixed(2)}M`;
+  if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
+  return `$${n.toLocaleString("en-US")}`;
 }
 
 export function formatINRFull(n: number): string {
-  return `₹${n.toLocaleString("en-IN")}`;
+  return `$${n.toLocaleString("en-US")}`;
 }
 
 export const totalMonthlyLoss = issues.reduce((s, i) => s + i.revenueImpact, 0);

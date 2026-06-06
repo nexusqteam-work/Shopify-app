@@ -15,16 +15,16 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export const VISUAL_PLAN_CONFIG = {
   FREE:   { enabled: false, pages: 0,  checks: 0,  codeGen: false, autoFix: false },
   GROWTH: { enabled: false, pages: 0,  checks: 0,  codeGen: false, autoFix: false },
-  // GROWTH = Advanced plan (₹1,999) — basic DOM analysis
+  // GROWTH = Advanced plan ($24.99) — basic DOM analysis
   // We map plan names: GROWTH→Advanced, PRO→Pro, AGENCY→Agent
   BASIC:  { enabled: false, pages: 0,  checks: 0,  codeGen: false, autoFix: false },
 };
 
 export const VISUAL_FEATURES = {
   FREE:   { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  },
-  GROWTH: { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Advanced ₹1,999
-  PRO:    { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Pro ₹2,999
-  AGENCY: { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Agent ₹29,999
+  GROWTH: { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Advanced $24.99
+  PRO:    { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Pro $59.99
+  AGENCY: { enabled: true,  pages: 99, checks: 50, codeGen: true,  autoFix: true  }, // Agent $179.99
 };
 
 // ── Browser singleton ────────────────────────────────
@@ -820,7 +820,7 @@ async function generateVisualInsights(shopDomain, issues, pageResults, plan) {
   }
 
   const topIssues = issues.slice(0, 5).map(i =>
-    `${i.priority}: ${i.title} — ₹${i.impact.toLocaleString('en-IN')}/mo estimated impact`
+    `${i.priority}: ${i.title} — $${i.impact.toLocaleString('en-US')}/mo estimated impact`
   ).join('\n');
 
   const totalImpact = issues.reduce((s, i) => s + i.impact, 0);
@@ -830,11 +830,11 @@ async function generateVisualInsights(shopDomain, issues, pageResults, plan) {
 Top Issues Found:
 ${topIssues}
 
-Total estimated monthly revenue impact: ₹${totalImpact.toLocaleString('en-IN')}
+Total estimated monthly revenue impact: $${totalImpact.toLocaleString('en-US')}
 Pages scanned: ${Object.keys(pageResults).join(', ')}
 Total issues: ${issues.length}
 
-Write a 2-sentence executive summary. Be specific about the biggest visual conversion problem and its business impact. Use Indian rupees.`;
+Write a 2-sentence executive summary. Be specific about the biggest visual conversion problem and its business impact. Use US Dollars ($).`;
 
   try {
     const response = await ai.models.generateContent({
@@ -845,6 +845,6 @@ Write a 2-sentence executive summary. Be specific about the biggest visual conve
     return response.text?.trim() || '';
   } catch (err) {
     logger.warn('Visual insights AI call failed:', err.message);
-    return `Visual analysis found ${issues.length} conversion issues with an estimated ₹${totalImpact.toLocaleString('en-IN')}/month revenue impact. The highest priority fix is: ${issues[0]?.title}.`;
+    return `Visual analysis found ${issues.length} conversion issues with an estimated $${totalImpact.toLocaleString('en-US')}/month revenue impact. The highest priority fix is: ${issues[0]?.title}.`;
   }
 }

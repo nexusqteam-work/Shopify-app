@@ -82,14 +82,14 @@ export async function sendIssueAlertEmail(merchant, issues) {
   const topIssue = issues[0];
   await sendEmail({
     to: merchant.email,
-    subject: `⚠️ ${issues.length} Issues Found — ₹${issues.reduce((s, i) => s + i.impact, 0).toLocaleString('en-IN')}/mo at risk`,
+    subject: `⚠️ ${issues.length} Issues Found — $${issues.reduce((s, i) => s + i.impact, 0).toLocaleString('en-US')}/mo at risk`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #EF4444;">⚠️ Action Required: ${issues.length} Issues Found</h2>
         <p style="color: #5A6A8A;">Your latest Flovix audit found issues costing your store money every month.</p>
         <div style="background: #FFF5F5; border-left: 4px solid #EF4444; padding: 16px; border-radius: 8px; margin: 16px 0;">
           <strong style="color: #EF4444;">#1 Priority: ${topIssue.title}</strong>
-          <p style="color: #5A6A8A; margin: 8px 0 0; font-size: 14px;">Estimated loss: ₹${topIssue.impact.toLocaleString('en-IN')}/month · Fix time: ${topIssue.effortMinutes} minutes</p>
+          <p style="color: #5A6A8A; margin: 8px 0 0; font-size: 14px;">Estimated loss: $${topIssue.impact.toLocaleString('en-US')}/month · Fix time: ${topIssue.effortMinutes} minutes</p>
         </div>
         <a href="${process.env.FRONTEND_URL}/issues" style="background: #EF4444; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 8px;">
           Fix Issues Now →

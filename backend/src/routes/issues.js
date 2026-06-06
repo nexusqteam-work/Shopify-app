@@ -61,7 +61,7 @@ router.patch('/:id/fix', validate(fixIssueSchema), async (req, res, next) => {
         merchantId: req.merchant.id,
         type:  'issue_fixed',
         title: 'Issue Fixed! 🎉',
-        body:  `You fixed "${issue.title}". Estimated ₹${issue.impact.toLocaleString('en-IN')}/month recovered.`,
+        body:  `You fixed "${issue.title}". Estimated $${issue.impact.toLocaleString('en-US')}/month recovered.`,
         data:  { issueId: issue.id, impact: issue.impact },
       },
     });

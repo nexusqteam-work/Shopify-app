@@ -8,7 +8,7 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "Flovix pricing plans — Basic, Advanced, Pro, and Agent. AI-powered Shopify audits, auto-fixes, and a merchant chatbot priced from ₹999/month.",
+          "Flovix pricing plans — Basic, Advanced, Pro, and Agent. AI-powered Shopify audits, auto-fixes, and a merchant chatbot priced from $12/month.",
       },
     ],
   }),
@@ -30,7 +30,7 @@ const TIERS: Tier[] = [
   {
     id: "basic",
     name: "Basic",
-    price: 999,
+    price: 12,
     tagline: "Get a clear picture of your store, every month.",
     icon: Sparkles,
     paragraphs: [
@@ -43,7 +43,7 @@ const TIERS: Tier[] = [
   {
     id: "advanced",
     name: "Advanced",
-    price: 1999,
+    price: 24.99,
     tagline: "Move from insight to safe, one-click fixes.",
     icon: Zap,
     highlight: true,
@@ -57,9 +57,10 @@ const TIERS: Tier[] = [
   {
     id: "pro",
     name: "Pro",
-    price: 2999,
+    price: 59.99,
     tagline: "Run your store on autopilot, with humans in the loop where it matters.",
     icon: Crown,
+    highlight: false,
     paragraphs: [
       "The Pro plan is designed for serious DTC operators and small agencies that treat their store as a revenue engine. It unlocks unlimited audits with daily scheduled scans, lifts per-audit coverage to two thousand products, and opens the full auto-fix catalogue — including bulk SEO rewrites, structured-data rollouts, redirect maps, theme micro-optimizations, and app-bloat cleanup. Pricing, inventory, and promotion changes become available as guarded actions: they execute only after a two-step confirmation and respect per-day caps, so a single mistake cannot cascade across the catalog.",
       "The chatbot allowance rises to ten thousand messages per month and gains agentic capabilities within a sandbox: it can stage edits, run dry-runs of bulk operations, and prepare merchandising experiments that the merchant reviews in a diff view before approval. Reports become white-label-ready, multi-store views are supported up to three connected Shopify stores, and Slack and email digests of new findings ship by default. What remains off-limits on Pro is fully unattended execution of high-value mutations — every price change, theme deploy, and large bulk write still requires an explicit human approval click.",
@@ -70,7 +71,7 @@ const TIERS: Tier[] = [
   {
     id: "agent",
     name: "Agent",
-    price: 29999,
+    price: 179.99,
     tagline: "A fully autonomous AI store operator, governed by your rules.",
     icon: Bot,
     paragraphs: [
@@ -78,7 +79,7 @@ const TIERS: Tier[] = [
       "Usage limits move from numerical ceilings to fair-use guardrails: unlimited audits and unlimited chatbot messages, unlimited connected stores, priority AI capacity with a dedicated model pool, and SLA-backed response times. The agent can perform bulk operations of any size, but any single action whose estimated revenue impact exceeds the configured threshold escalates to the merchant via Slack or email and waits for approval. Restricted categories — refunds, customer data exports, payment configuration, and storefront takedowns — remain permanently behind explicit human confirmation regardless of policy settings, because some actions should never be autonomous.",
     ],
     enforcement:
-      "The Agent plan adds a per-store policy engine that evaluates every autonomous action against configured guardrails before execution. All AI inference is metered per token and per action, with circuit breakers that pause the agent if anomalous usage patterns suggest a runaway loop or a prompt-injection attempt.",
+      "The Agent plan adds a per-store policy engine that evaluates every autonomous action against configured guardrails before execution. All AI inference is metered per token and per action, with circuit breakers that shadow-box anomalous usage patterns.",
   },
 ];
 
@@ -153,7 +154,7 @@ function PricingPage() {
               <div className="mt-5">
                 <div className="flex items-baseline gap-1">
                   <span className="display text-3xl font-bold tracking-tight">
-                    ₹{t.price.toLocaleString("en-IN")}
+                    ${t.price.toLocaleString("en-US")}
                   </span>
                   <span className="text-[13px]" style={{ color: "var(--text-muted)" }}>
                     /month
@@ -228,7 +229,7 @@ function PricingPage() {
                 </h2>
               </div>
               <div className="display text-2xl font-bold">
-                ₹{t.price.toLocaleString("en-IN")}
+                ${t.price.toLocaleString("en-US")}
                 <span className="text-[13px] font-normal" style={{ color: "var(--text-muted)" }}>
                   {" "}
                   /month

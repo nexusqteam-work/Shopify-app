@@ -31,7 +31,7 @@ function requireVisualAccess(req, res, next) {
   if (!config?.enabled) {
     return res.status(403).json({
       success: false,
-      error: 'Visual analysis requires Advanced plan (₹1,999/month) or higher',
+      error: 'Visual analysis requires Advanced plan ($24.99/month) or higher',
       upgradeRequired: true,
       currentPlan: req.merchant.plan,
       requiredPlan: 'GROWTH',
@@ -46,7 +46,7 @@ function requireCodeGen(req, res, next) {
   if (!config?.codeGen) {
     return res.status(403).json({
       success: false,
-      error: 'Code generation requires Pro plan (₹2,999/month) or higher',
+      error: 'Code generation requires Pro plan ($59.99/month) or higher',
       upgradeRequired: true,
       currentPlan: req.merchant.plan,
       requiredPlan: 'PRO',
@@ -60,7 +60,7 @@ function requireAutoFix(req, res, next) {
   if (!config?.autoFix) {
     return res.status(403).json({
       success: false,
-      error: 'Auto-fix requires Agent plan (₹29,999/month)',
+      error: 'Auto-fix requires Agent plan ($179.99/month)',
       upgradeRequired: true,
       currentPlan: req.merchant.plan,
       requiredPlan: 'AGENCY',
@@ -603,15 +603,15 @@ router.get('/plan-info', async (req, res) => {
     upgradeInfo: !config.enabled ? {
       message: 'Upgrade to Advanced plan for visual DOM analysis',
       requiredPlan: 'GROWTH',
-      price: '₹1,999/month',
+      price: '$24.99/month',
     } : !config.codeGen ? {
       message: 'Upgrade to Pro plan for AI code generation',
       requiredPlan: 'PRO',
-      price: '₹2,999/month',
+      price: '$59.99/month',
     } : !config.autoFix ? {
       message: 'Upgrade to Agent plan for auto-fix',
       requiredPlan: 'AGENCY',
-      price: '₹29,999/month',
+      price: '$179.99/month',
     } : null,
   });
 });

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/visual-audit")({
 });
 
   function formatINRFull(n: number): string {
-  return `₹${n.toLocaleString("en-IN")}`;
+  return `$${n.toLocaleString("en-US")}`;
 }
 
 const POLL_INTERVAL_DEFAULT = 3000;
@@ -136,9 +136,9 @@ function VisualAuditPage() {
             Visual Analysis requires Advanced plan or higher.
           </p>
           <div className="text-left text-[13px] p-4 rounded-xl mb-6 space-y-2 border" style={{ background: "var(--muted)", borderColor: "var(--border)" }}>
-            <div className="flex justify-between"><span>Advanced</span><span className="font-bold">₹1,999/mo</span></div>
-            <div className="flex justify-between"><span>Pro</span><span className="font-bold">₹2,999/mo</span></div>
-            <div className="flex justify-between"><span>Agent</span><span className="font-bold">₹29,999/mo</span></div>
+            <div className="flex justify-between"><span>Advanced</span><span className="font-bold">$24.99/mo</span></div>
+            <div className="flex justify-between"><span>Pro</span><span className="font-bold">$59.99/mo</span></div>
+            <div className="flex justify-between"><span>Agent</span><span className="font-bold">$179.99/mo</span></div>
           </div>
           <button
             onClick={() => upgradeMutation.mutate()}

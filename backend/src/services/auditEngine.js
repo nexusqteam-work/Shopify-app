@@ -142,7 +142,7 @@ export async function runFullAudit(auditId, merchant) {
         merchantId: merchant.id,
         type:       'audit_complete',
         title:      'Store Audit Complete',
-        body:       `Found ${allIssues.length} issues costing ~₹${Math.round(totalRevenueLoss).toLocaleString('en-IN')}/month. Score: ${overallScore}/100`,
+        body:       `Found ${allIssues.length} issues costing ~$${Math.round(totalRevenueLoss).toLocaleString('en-US')}/month. Score: ${overallScore}/100`,
         data:       { auditId, issueCount: allIssues.length, totalRevenueLoss },
       },
     });
@@ -487,7 +487,7 @@ async function auditMobile(shopDomain) {
 
 // ── AI Summary Generator ─────────────────────────────
 async function generateAISummary({ shopName, scores, overallScore, issues, orders, products }) {
-  const topIssues = issues.slice(0, 3).map(i => `${i.title} (₹${i.impact.toLocaleString('en-IN')}/mo)`).join(', ');
+  const topIssues = issues.slice(0, 3).map(i => `${i.title} ($${i.impact.toLocaleString('en-US')}/mo)`).join(', ');
 
   const prompt = `You are an expert Shopify consultant. Analyze this store audit and write a 3-4 sentence executive summary.
 
@@ -506,7 +506,7 @@ Category Scores:
 
 Top Issues: ${topIssues}
 Total Issues Found: ${issues.length}
-Total Estimated Monthly Loss: ₹${issues.reduce((s, i) => s + i.impact, 0).toLocaleString('en-IN')}
+Total Estimated Monthly Loss: $${issues.reduce((s, i) => s + i.impact, 0).toLocaleString('en-US')}
 
 Write a clear, direct executive summary. Mention the biggest pain point, the estimated revenue impact, and one key priority. Be specific and actionable. No fluff.`;
 
@@ -519,6 +519,6 @@ Write a clear, direct executive summary. Mention the biggest pain point, the est
     return response.text || '';
   } catch (err) {
     logger.error('AI summary generation failed:', err);
-    return `${shopName} scored ${overallScore}/100 in this audit with ${issues.length} issues found. The top priority is addressing ${issues[0]?.title || 'performance issues'} which is estimated to cost ₹${issues[0]?.impact?.toLocaleString('en-IN') || 0}/month. Focus on the critical issues first for maximum revenue recovery.`;
+    return `${shopName} scored ${overallScore}/100 in this audit with ${issues.length} issues found. The top priority is addressing ${issues[0]?.title || 'performance issues'} which is estimated to cost $${issues[0]?.impact?.toLocaleString('en-US') || 0}/month. Focus on the critical issues first for maximum revenue recovery.`;
   }
 }
