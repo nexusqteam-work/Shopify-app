@@ -28,16 +28,6 @@ export function FloatingAdvisor() {
                 <div className="display text-[14px] font-bold tracking-tight leading-tight">
                   AI Flovix
                 </div>
-                <div
-                  className="text-[10.5px] mono inline-flex items-center gap-1.5 mt-0.5"
-                  style={{ color: "var(--emerald-brand)" }}
-                >
-                  <span
-                    className="size-1.5 rounded-full animate-pulse-dot"
-                    style={{ background: "var(--emerald-brand)" }}
-                  />
-                  Online · Powered by Claude
-                </div>
               </div>
             </div>
             <button

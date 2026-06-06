@@ -8,6 +8,7 @@ import {
   Clock,
   CheckCircle2,
   Bell,
+  Sparkles,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +19,7 @@ import { authApi, auditApi, issuesApi, metricsApi } from "@/lib/api";
 import { SkeletonCard, SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useMerchant } from "@/hooks/useMerchant";
+import logoUrl from "../assets/Logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -89,6 +91,16 @@ function MetricCard({
   );
 }
 
+function buildWeeklyRevenue(metrics: any[]) {
+  const weekly: Record<string, number> = {};
+  metrics.forEach((m) => {
+    const d = new Date(m.date || Date.now());
+    const weekStr = `W${Math.ceil(d.getDate() / 7)} ${d.toLocaleString('en-US', { month: 'short' })}`;
+    weekly[weekStr] = (weekly[weekStr] || 0) + (m.revenue || 0);
+  });
+  return Object.entries(weekly).map(([week, value]) => ({ week, value }));
+}
+
 function Dashboard() {
   const [bannerOpen, setBannerOpen] = useState(true);
   const { merchant } = useMerchant();
@@ -119,6 +131,10 @@ function Dashboard() {
 
   const isLoading = loadingMetrics || loadingIssues || loadingSummary || loadingAudit;
   const isError = errorMetrics || errorIssues || errorSummary || errorAudit;
+
+  const metrics = useMemo(() => (metricsData as any)?.metrics || [], [metricsData]);
+  const weeklyRevenue = useMemo(() => buildWeeklyRevenue(metrics), [metrics]);
+  const maxRev = useMemo(() => Math.max(...weeklyRevenue.map((point) => point.value), 1), [weeklyRevenue]);
 
   if (isLoading) {
     return (
@@ -166,9 +182,8 @@ function Dashboard() {
   ] : [];
 
   const overallScore = audit?.overallScore || 0;
-  const unreadNotifications = 0; // Will be handled by sidebar globally or context
+  const unreadNotifications = 0; 
 
-  const metrics = (metricsData as any)?.metrics || [];
   const sparklines = {
     revenue: metrics.map((m: any) => m.revenue),
     orders: metrics.map((m: any) => m.orders),
@@ -258,6 +273,76 @@ function Dashboard() {
         </div>
       )}
 
+      {/* Premium Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl border border-[var(--border)] bg-gradient-to-br from-white via-white to-[color-mix(in oklab,var(--emerald-brand)_4%,white)] p-6 sm:p-8 lg:p-10 mb-8 animate-fade-up">
+        <div className="absolute -top-40 -right-40 size-[320px] rounded-full bg-[color-mix(in oklab,var(--emerald-brand)_8%,transparent)] blur-[100px] pointer-events-none" />
+        <div className="absolute -bottom-40 -left-40 size-[320px] rounded-full bg-[color-mix(in oklab,var(--electric)_6%,transparent)] blur-[100px] pointer-events-none" />
+
+        <div className="relative flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-16">
+          <div className="flex-1 space-y-4 max-w-2xl text-left">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[color-mix(in oklab,var(--emerald-brand)_20%,transparent)] bg-[color-mix(in oklab,var(--emerald-brand)_6%,white)] text-[11px] font-bold tracking-wider uppercase text-[var(--emerald-brand)]">
+              <Sparkles className="size-3 animate-pulse" /> AI-Powered Store Audit
+            </div>
+            <h2 className="display text-[32px] sm:text-[44px] lg:text-[48px] font-extrabold tracking-tight leading-[1.15]">
+              Audit. Optimize. <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--emerald-brand)] to-emerald-600">Grow Profits.</span>
+            </h2>
+            <p className="text-[14px] sm:text-[15px] leading-relaxed text-[var(--text-secondary)]">
+              Flovix AI audits your store, uncovers hidden conversion leaks, and delivers actionable recommendations that drive design efficiency, store growth, and higher profits.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Link
+                to="/audit"
+                className="gradient-emerald text-white font-semibold text-[13.5px] px-5 py-3 rounded-xl flex items-center gap-2 glow-emerald hover:opacity-95 active:scale-[0.98] transition-all"
+              >
+                Start Store Audit <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                to="/advisor"
+                className="px-5 py-3 rounded-xl border border-[var(--border)] bg-white text-[13.5px] font-semibold flex items-center gap-2 hover:bg-[var(--muted)] transition-all"
+              >
+                Talk to AI Coach
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative w-full max-w-[380px] lg:max-w-[420px] h-[280px] sm:h-[320px] flex items-center justify-center shrink-0">
+            <div className="relative size-32 sm:size-40 rounded-full bg-white border border-[var(--border)] flex items-center justify-center shadow-lg overflow-hidden animate-pulse-slow">
+              <img src={logoUrl} alt="Flovix Logo" className="size-20 sm:size-28 object-contain" />
+            </div>
+
+            <div className="absolute top-2 -left-4 sm:-left-8 surface-card p-3 rounded-xl border border-[var(--border)] shadow-md flex items-center gap-2.5 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+              <div className="size-8 rounded-lg bg-[color-mix(in oklab,var(--emerald-brand)_12%,white)] flex items-center justify-center text-[var(--emerald-brand)] font-bold text-xs shrink-0">
+                %
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Profit Impact</div>
+                <div className="text-[13px] font-extrabold text-[var(--emerald-brand)]">+{displayMetrics.revenue.change}%</div>
+              </div>
+            </div>
+
+            <div className="absolute top-1/2 -right-4 sm:-right-8 -translate-y-1/2 surface-card p-3 rounded-xl border border-[var(--border)] shadow-md flex items-center gap-2.5 animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+              <div className="size-8 rounded-lg bg-[color-mix(in oklab,var(--danger)_12%,white)] flex items-center justify-center text-[var(--danger)] font-bold text-xs shrink-0 font-mono">
+                !
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Issues Found</div>
+                <div className="text-[13px] font-extrabold">{issues.length} Issues</div>
+              </div>
+            </div>
+
+            <div className="absolute bottom-2 -left-4 sm:-left-8 surface-card p-3 rounded-xl border border-[var(--border)] shadow-md flex items-center gap-2.5 animate-fade-in-up" style={{ animationDelay: "450ms" }}>
+              <div className="size-8 rounded-lg bg-[color-mix(in oklab,var(--electric)_12%,white)] flex items-center justify-center text-[var(--electric)] font-bold text-xs shrink-0 font-mono">
+                {overallScore}
+              </div>
+              <div>
+                <div className="text-[10px] uppercase font-bold text-[var(--text-muted)] tracking-wider">Health Score</div>
+                <div className="text-[13px] font-extrabold text-[var(--electric)]">{overallScore}/100</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MetricCard label="Monthly Revenue" value={displayMetrics.revenue.value} change={displayMetrics.revenue.change} data={sparklines.revenue} color="var(--emerald-brand)" format={formatINR} delay={80} />
         <MetricCard label="Total Orders" value={displayMetrics.orders.value} change={displayMetrics.orders.change} data={sparklines.orders} color="var(--electric)" format={(v) => v.toLocaleString("en-IN")} delay={120} />
@@ -265,110 +350,160 @@ function Dashboard() {
         <MetricCard label="Conversion Rate" value={displayMetrics.conversion.value} change={0} note="Live" data={sparklines.conversion} color="var(--warn)" format={(v) => `${v}%`} delay={200} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-6 mb-6">
-        <div className="surface-card p-6 animate-fade-up" style={{ animationDelay: "240ms" }}>
-          <div className="label-eyebrow mb-1">Overall Health</div>
-          <div className="text-[15px] font-semibold mb-4">Store Score</div>
-          <div className="flex flex-col items-center">
-            <ScoreRing score={overallScore} size={140} stroke={10} />
-            <div className="mt-3 text-[13px] font-semibold mono uppercase tracking-wider" style={{ color: overallScore >= 70 ? "var(--emerald-brand)" : "var(--warn)" }}>
-              {overallScore >= 70 ? "Healthy" : overallScore > 0 ? "Needs Improvement" : "Awaiting audit"}
-            </div>
-            <div className="text-[12px] mt-1" style={{ color: "var(--text-secondary)" }}>
-              {categories.length > 0 ? `${categories.filter((item) => item.score < 70).length} categories underperforming` : "Run an audit to see category scores"}
-            </div>
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-2">
-            {categories.map((category) => (
-              <div key={category.key} className="flex items-center gap-2 text-[12px]">
-                <span
-                  className="size-2 rounded-full shrink-0"
-                  style={{
-                    background: category.score < 50 ? "var(--danger)" : category.score < 70 ? "var(--warn)" : "var(--emerald-brand)",
-                  }}
-                />
-                <span style={{ color: "var(--text-secondary)" }}>{category.name}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content (Left Column) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Revenue Opportunity Bar Chart */}
+          <div className="surface-card p-6 animate-fade-up" style={{ animationDelay: "240ms" }}>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <div className="label-eyebrow">Trend</div>
+                <h2 className="display text-[17px] font-bold tracking-tight">Revenue Opportunity</h2>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 surface-card p-6 animate-fade-up" style={{ animationDelay: "280ms" }}>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <div className="label-eyebrow">Categories</div>
-              <div className="text-[15px] font-semibold">Performance Breakdown</div>
+              <span className="text-[11px] font-bold px-2.5 py-1 rounded-full text-[var(--emerald-brand)] bg-[color-mix(in_oklab,var(--emerald-brand)_12%,white)]">
+                Last 30 Days
+              </span>
             </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {categories.map((category, i) => (
-              <div
-                key={category.key}
-                className="rounded-xl p-4 border surface-card-hover animate-fade-up"
-                style={{ borderColor: "var(--border)", animationDelay: `${320 + i * 40}ms` }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="text-xl">{category.emoji}</div>
-                </div>
-                <div className="text-[12.5px] font-semibold mb-2">{category.name}</div>
-                <div className="flex items-center gap-3">
-                  <ScoreRing score={category.score} size={56} stroke={5} />
-                  <div className="text-[11px] mono uppercase tracking-wider font-bold" style={{ color: category.score < 50 ? "var(--danger)" : category.score < 70 ? "var(--warn)" : "var(--emerald-brand)" }}>
-                    {category.score < 50 ? "Poor" : category.score < 70 ? "Fair" : "Good"}
+            <div className="h-56 flex items-end gap-6 px-2 relative mt-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="absolute left-0 right-0 border-t border-dashed" style={{ borderColor: "var(--border)", bottom: `${(i / 3) * 100}%` }} />
+              ))}
+              {weeklyRevenue.map((point, i) => {
+                const height = (point.value / maxRev) * 100;
+                return (
+                  <div key={`${point.week}-${i}`} className="flex-1 flex flex-col items-center gap-2 z-10">
+                    <div className="mono text-[11px] font-bold">{formatINR(point.value)}</div>
+                    <div className="w-full max-w-[80px] flex flex-col justify-end" style={{ height: 160 }}>
+                      <div
+                        className="w-full rounded-t-xl animate-fade-up"
+                        style={{
+                          height: `${height}%`,
+                          background: "linear-gradient(180deg, oklch(0.78 0.16 165) 0%, oklch(0.68 0.18 170) 100%)",
+                          animationDelay: `${300 + i * 80}ms`,
+                        }}
+                      />
+                    </div>
+                    <div className="text-[11px] mono" style={{ color: "var(--text-secondary)" }}>{point.week}</div>
                   </div>
-                </div>
-              </div>
-            ))}
-            {categories.length === 0 && (
-              <div className="col-span-full rounded-xl p-6 border text-[13px]" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
-                No audit data yet. Open the audit page and run your first live scan.
+                );
+              })}
+            </div>
+            {weeklyRevenue.length === 0 && (
+              <div className="mt-4 text-[13px] text-center" style={{ color: "var(--text-secondary)" }}>
+                No metric history yet. Sync metrics from Shopify first.
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="surface-card p-6 animate-fade-up" style={{ animationDelay: "400ms" }}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="label-eyebrow" style={{ color: "var(--danger)" }}>Urgent</div>
-              <div className="text-[15px] font-semibold">Action Required</div>
+          {/* Performance Breakdown */}
+          <div className="surface-card p-6 animate-fade-up" style={{ animationDelay: "280ms" }}>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <div className="label-eyebrow">Categories</div>
+                <div className="text-[15px] font-semibold">Performance Breakdown</div>
+              </div>
             </div>
-            <span className="text-[11px] mono font-bold px-2 py-1 rounded-full" style={{ background: "color-mix(in oklab, var(--danger) 12%, white)", color: "var(--danger)" }}>
-              {issues.length} OPEN
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {issues.slice(0, 3).map((issue: any) => (
-              <div key={issue.id} className="flex items-center gap-3 p-3 rounded-xl border hover:border-[var(--emerald-brand)] transition-colors" style={{ borderColor: "var(--border)" }}>
-                <span className="size-2.5 rounded-full shrink-0" style={{ background: issue.priority === "critical" ? "var(--danger)" : "var(--warn)" }} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold truncate">{issue.title}</div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[11.5px] mono font-bold" style={{ color: "var(--danger)" }}>
-                      {formatINRFull(issue.revenueImpact)}/mo
-                    </span>
-                    <span className="text-[10.5px] mono px-1.5 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--text-secondary)" }}>
-                      <Clock className="inline size-3 mr-0.5" />
-                      {issue.effortLabel}
-                    </span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {categories.map((category, i) => (
+                <div
+                  key={category.key}
+                  className="rounded-xl p-4 border surface-card-hover animate-fade-up"
+                  style={{ borderColor: "var(--border)", animationDelay: `${320 + i * 40}ms` }}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="text-xl">{category.emoji}</div>
+                  </div>
+                  <div className="text-[12.5px] font-semibold mb-2">{category.name}</div>
+                  <div className="flex items-center gap-3">
+                    <ScoreRing score={category.score} size={56} stroke={5} />
+                    <div className="text-[11px] mono uppercase tracking-wider font-bold" style={{ color: category.score < 50 ? "var(--danger)" : category.score < 70 ? "var(--warn)" : "var(--emerald-brand)" }}>
+                      {category.score < 50 ? "Poor" : category.score < 70 ? "Fair" : "Good"}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {issues.length === 0 && (
-              <div className="rounded-xl p-4 border text-[13px]" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
-                No open issues found.
-              </div>
-            )}
+              ))}
+              {categories.length === 0 && (
+                <div className="col-span-full rounded-xl p-6 border text-[13px] text-center" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
+                  No audit data yet. Open the audit page and run your first live scan.
+                </div>
+              )}
+            </div>
           </div>
-          <Link to="/action-plan" className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--emerald-brand)" }}>
-            View Action Plan <ArrowRight className="size-4" />
-          </Link>
         </div>
 
-        <QuickWins issues={issues} />
+        {/* Sidebar (Right Column) */}
+        <div className="space-y-6">
+          {/* Overall Health Card */}
+          <div className="surface-card p-6 animate-fade-up" style={{ animationDelay: "240ms" }}>
+            <div className="label-eyebrow mb-1">Overall Health</div>
+            <div className="text-[15px] font-semibold mb-4">Store Score</div>
+            <div className="flex flex-col items-center">
+              <ScoreRing score={overallScore} size={140} stroke={10} />
+              <div className="mt-3 text-[13px] font-semibold mono uppercase tracking-wider" style={{ color: overallScore >= 70 ? "var(--emerald-brand)" : "var(--warn)" }}>
+                {overallScore >= 70 ? "Healthy" : overallScore > 0 ? "Needs Improvement" : "Awaiting audit"}
+              </div>
+              <div className="text-[12px] mt-1 text-center" style={{ color: "var(--text-secondary)" }}>
+                {categories.length > 0 ? `${categories.filter((item) => item.score < 70).length} categories underperforming` : "Run an audit to see category scores"}
+              </div>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-2">
+              {categories.map((category) => (
+                <div key={category.key} className="flex items-center gap-2 text-[12px]">
+                  <span
+                    className="size-2 rounded-full shrink-0"
+                    style={{
+                      background: category.score < 50 ? "var(--danger)" : category.score < 70 ? "var(--warn)" : "var(--emerald-brand)",
+                    }}
+                  />
+                  <span style={{ color: "var(--text-secondary)" }}>{category.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top Urgent Issues */}
+          <div className="surface-card p-6 animate-fade-up" style={{ animationDelay: "400ms" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="label-eyebrow" style={{ color: "var(--danger)" }}>Urgent</div>
+                <div className="text-[15px] font-semibold">Action Required</div>
+              </div>
+              <span className="text-[11px] mono font-bold px-2 py-1 rounded-full" style={{ background: "color-mix(in oklab, var(--danger) 12%, white)", color: "var(--danger)" }}>
+                {issues.length} OPEN
+              </span>
+            </div>
+            <div className="space-y-2.5">
+              {issues.slice(0, 3).map((issue: any) => (
+                <div key={issue.id} className="flex items-center gap-3 p-3 rounded-xl border hover:border-[var(--emerald-brand)] transition-colors" style={{ borderColor: "var(--border)" }}>
+                  <span className="size-2.5 rounded-full shrink-0" style={{ background: issue.priority === "critical" ? "var(--danger)" : "var(--warn)" }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-semibold truncate">{issue.title}</div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[11.5px] mono font-bold" style={{ color: "var(--danger)" }}>
+                        {formatINRFull(issue.revenueImpact)}/mo
+                      </span>
+                      <span className="text-[10.5px] mono px-1.5 py-0.5 rounded" style={{ background: "var(--muted)", color: "var(--text-secondary)" }}>
+                        <Clock className="inline size-3 mr-0.5" />
+                        {issue.effortLabel}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {issues.length === 0 && (
+                <div className="rounded-xl p-4 border text-[13px] text-center" style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}>
+                  No open issues found.
+                </div>
+              )}
+            </div>
+            <Link to="/action-plan" className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--emerald-brand)" }}>
+              View Action Plan <ArrowRight className="size-4" />
+            </Link>
+          </div>
+
+          {/* Quick Wins */}
+          <QuickWins issues={issues} />
+        </div>
       </div>
     </div>
   );
